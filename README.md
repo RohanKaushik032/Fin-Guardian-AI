@@ -13,6 +13,68 @@ Fin-Guardian AI stops fraud **before the transaction completes** by:
 
 ---
 
+## 🏗️ System Architecture
+
+> Multi-layer fraud detection pipeline inspired by modern financial fraud workflows.
+
+![Fin-Guardian AI System Architecture](docs/screenshots/system_architecture.png)
+
+<details>
+<summary>View Text-Based Flowchart</summary>
+
+```text
+            User Dashboard / Sandbox / API Clients
+                              │
+                              ▼
+                   FastAPI Gateway (<30ms)
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+      XGBoost            Autoencoder            Feature
+    Known Fraud           Anomalies        Enrichment Layer
+                                            (Redis-backed)
+         └────────────────────┬────────────────────┘
+                              ▼
+                       Decision Engine
+                   (APPROVE • HOLD • DENY)
+                              │
+                              ▼
+                       Kafka Event Bus
+                              │
+               ┌──────────────┴──────────────┐
+               ▼                             ▼
+   Redis Cache + Session Store      Background Workers
+                                             │
+                                             ▼
+                                    SHAP Explainability
+                                             │
+                                             ▼
+                                   LangGraph AI Detective
+                                    ✓ IP Analysis
+                                    ✓ Device Fingerprint
+                                    ✓ Risk Matrix
+                                    ✓ Graph Query
+                                    ✓ OpenAI Synthesis
+                                             │
+                                             ▼
+                                    Neo4j Graph Database
+                                     Multi-Hop Analysis
+                                    Fraud Ring Detection
+                                             │
+                                             ▼
+                                         OpenAI API
+                                    Forensic Explanation
+                                             │
+                                             ▼
+                                 Real-Time WebSocket Updates
+                                             │
+                                             ▼
+                                        Dashboard UI
+```
+</details>
+
+---
+
 ## ⚡ Quick Start (5 minutes)
 
 ### 1. Install Dependencies
