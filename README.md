@@ -1,283 +1,411 @@
-# Fin-Guardian AI — Quick Start Guide
+# 🛡️ Fin-Guardian AI
 
-> Real-time fraud detection in under 30 milliseconds  
-> Autonomous, explainable, production-ready
+<h3 align="center">
+Intelligent Fraud Detection & Investigation Platform
+</h3>
 
-## 🎯 What This System Does
+<p align="center">
+Real-time AI-powered fraud detection system inspired by modern banking fraud workflows.
+</p>
 
-Fin-Guardian AI stops fraud **before the transaction completes** by:
-1. **Instantly scoring** transactions with XGBoost + Autoencoder (<30ms)
-2. **Mapping fraud networks** with graph algorithms (Neo4j)
-3. **Investigating deeply** with an AI agent (LangGraph)
-4. **Responding smartly** with adaptive step-up challenges
+<p align="center">
+
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
+![PyTorch](https://img.shields.io/badge/PyTorch-Autoencoder-red)
+![Neo4j](https://img.shields.io/badge/Neo4j-GraphDB-blue)
+![Kafka](https://img.shields.io/badge/Kafka-EventDriven-black)
+![Redis](https://img.shields.io/badge/Redis-Cache-red)
+![LangGraph](https://img.shields.io/badge/LangGraph-AI%20Agent-purple)
+
+</p>
 
 ---
 
-## 🏗️ System Architecture
+# 🚀 Overview
 
-> Multi-layer fraud detection pipeline inspired by modern financial fraud workflows.
+Fin-Guardian AI is an end-to-end fraud detection and investigation platform designed to simulate modern financial fraud operations.
 
-![Fin-Guardian AI System Architecture](docs/screenshots/system_architecture.png)
+The platform combines:
 
-<details>
-<summary>View Text-Based Flowchart</summary>
+- ⚡ Real-time machine learning inference
+- 🧠 Hybrid anomaly detection
+- 📈 Explainable AI (SHAP)
+- 🕸 Graph intelligence (Neo4j)
+- 🤖 AI-powered investigations
+- 📡 Event-driven architecture
+- 🔴 Live dashboards and WebSocket updates
+
+---
+
+# 🌟 Highlights
+
+- ⚡ Sub-30ms fraud inference
+- 🧠 XGBoost + Autoencoder hybrid detection
+- 📈 SHAP explainability
+- 🕸 Neo4j graph intelligence
+- 🤖 LangGraph AI Detective
+- 📡 Kafka + Redis architecture
+- 🔴 Real-time dashboard updates
+- 🔍 AI-generated forensic explanations
+
+---
+
+# 🏗 System Architecture
+
+Fin-Guardian AI follows a multi-layer architecture inspired by modern fraud prevention systems.
+
+![Architecture](docs/screenshots/system_architecture.png)
+
+---
+
+# 📊 Dashboard Overview
+
+Real-time monitoring dashboard showing transaction activity, system health, latency, and risk metrics.
+
+![Dashboard](docs/screenshots/dashboard_overview.png)
+
+---
+
+# 🧪 Transaction Sandbox
+
+Interactive sandbox for manually simulating banking transactions.
+
+Users can test both legitimate and suspicious scenarios.
+
+![Transaction Sandbox](docs/screenshots/transaction_sandbox.jpeg)
+
+---
+
+# 🤖 AI Investigation Workspace
+
+Displays AI-generated forensic reports and investigation summaries for suspicious transactions.
+
+![AI Investigation](docs/screenshots/ai_investigation_workspace.jpeg)
+
+---
+
+# 🕸 Graph Explorer (Neo4j)
+
+Visual fraud network used for multi-hop relationship analysis and money mule detection.
+
+![Graph Explorer](docs/screenshots/graph_explorer_neo4j.jpeg)
+
+---
+
+# ✨ Core Features
+
+## ⚡ Real-Time Risk Scoring
+
+Transactions are classified into:
+
+- APPROVE
+- HOLD
+- DENY
+
+---
+
+## 🧠 Hybrid Fraud Detection Engine
+
+Combines:
+
+### XGBoost
+
+Detects known fraud patterns.
+
+### PyTorch Autoencoder
+
+Detects previously unseen anomalies.
+
+---
+
+## 📈 Explainable AI
+
+SHAP values provide:
+
+- Feature importance
+- Transparent predictions
+- Compliance-friendly explanations
+
+---
+
+## 🕸 Graph Intelligence
+
+Neo4j graph analysis enables:
+
+- Multi-hop relationship discovery
+- Fraud ring detection
+- Money mule identification
+
+---
+
+## 🤖 LangGraph AI Detective
+
+Autonomous investigation pipeline capable of:
+
+- IP analysis
+- Device fingerprint analysis
+- Risk matrix evaluation
+- Graph queries
+- OpenAI-powered forensic reports
+
+---
+
+## 📡 Event-Driven Architecture
+
+Supports:
+
+- Kafka messaging
+- Redis caching
+- Background workers
+- WebSocket updates
+
+---
+
+# 🏗 Multi-Layer Architecture
+
+## Layer 1 — Hot Path (<30ms)
+
+- Feature engineering
+- XGBoost inference
+- Autoencoder anomaly detection
+- Instant APPROVE / HOLD / DENY decisions
+
+---
+
+## Layer 2 — Event Pipeline
+
+- Kafka events
+- Redis cache
+- Background processing
+
+---
+
+## Layer 3 — Deep Investigation
+
+- LangGraph AI detective
+- SHAP explainability
+- Neo4j graph intelligence
+- OpenAI explanations
+
+---
+
+## Layer 4 — Dashboard
+
+- Real-time monitoring
+- WebSocket updates
+- Interactive sandbox
+
+---
+
+# 🛠 Tech Stack
+
+| Layer | Technology |
+|---------|------------|
+| Backend | FastAPI |
+| ML Model | XGBoost |
+| Anomaly Detection | PyTorch Autoencoder |
+| Explainability | SHAP |
+| Event Bus | Kafka |
+| Cache | Redis |
+| Graph Database | Neo4j |
+| AI Agent | LangGraph |
+| LLM | OpenAI API |
+| Realtime | WebSockets |
+| Testing | Pytest |
+| Experimentation | Jupyter |
+
+---
+
+# 📂 Project Structure
 
 ```text
-            User Dashboard / Sandbox / API Clients
-                              │
-                              ▼
-                   FastAPI Gateway (<30ms)
-                              │
-         ┌────────────────────┼────────────────────┐
-         ▼                    ▼                    ▼
-      XGBoost            Autoencoder            Feature
-    Known Fraud           Anomalies        Enrichment Layer
-                                            (Redis-backed)
-         └────────────────────┬────────────────────┘
-                              ▼
-                       Decision Engine
-                   (APPROVE • HOLD • DENY)
-                              │
-                              ▼
-                       Kafka Event Bus
-                              │
-               ┌──────────────┴──────────────┐
-               ▼                             ▼
-   Redis Cache + Session Store      Background Workers
-                                             │
-                                             ▼
-                                    SHAP Explainability
-                                             │
-                                             ▼
-                                   LangGraph AI Detective
-                                    ✓ IP Analysis
-                                    ✓ Device Fingerprint
-                                    ✓ Risk Matrix
-                                    ✓ Graph Query
-                                    ✓ OpenAI Synthesis
-                                             │
-                                             ▼
-                                    Neo4j Graph Database
-                                     Multi-Hop Analysis
-                                    Fraud Ring Detection
-                                             │
-                                             ▼
-                                         OpenAI API
-                                    Forensic Explanation
-                                             │
-                                             ▼
-                                 Real-Time WebSocket Updates
-                                             │
-                                             ▼
-                                        Dashboard UI
+Fin-Guardian-AI
+│
+├── app/
+├── workers/
+├── artifacts/
+├── dashboard/
+├── graph/
+├── tests/
+├── docs/
+│   └── screenshots/
+├── Notebooks/
+├── docker-compose.yml
+└── requirements.txt
 ```
-</details>
 
 ---
 
-## ⚡ Quick Start (5 minutes)
+# ⚡ Quick Start
 
-### 1. Install Dependencies
+## Clone Repository
+
 ```bash
-cd c:\Users\rohan\OneDrive\Desktop\Fin_Gurdain
+git clone https://github.com/RohanKaushik032/Fin-Guardian-AI.git
+
+cd Fin-Guardian-AI
+```
+
+---
+
+## Create Environment
+
+```bash
+python -m venv myenv
+
 myenv\Scripts\activate
+```
+
+---
+
+## Install Dependencies
+
+```bash
 pip install -r requirements.txt
-pip install neo4j redis pytest jupyter langgraph langchain-openai
 ```
 
-### 2. Start Infrastructure
+---
+
+## Start Infrastructure
+
 ```bash
-# Terminal 1: Start all services (Kafka, Neo4j, Redis)
 docker-compose up -d
-
-# Verify everything is running
-docker-compose ps
 ```
 
-### 3. Initialize Database
+Services started:
+
+- Kafka
+- Redis
+- Neo4j
+
+---
+
+## Run FastAPI
+
 ```bash
-# Open http://localhost:7474
-# Login: neo4j / fingurdain123
-# Paste these commands in the query editor:
-
-CREATE (priya:Account {
-  account_id: 'C_PRIYA_STUDENT_001',
-  name: 'Priya (Student)',
-  risk_score: 0.2
-});
-
-CREATE (unknown:Account {
-  account_id: 'C_UNKNOWN_RECIPIENT_999',
-  name: 'Money Mule Account',
-  risk_score: 0.95
-});
+python -m uvicorn app.main:app --reload
 ```
 
-### 4. Start API
-```bash
-# Terminal 2: Run the FastAPI server
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+Open:
 
-# Open Swagger UI: http://localhost:8000/docs
+```text
+http://localhost:8000/docs
 ```
 
-### 5. Test a Transaction
-Open http://localhost:8000/docs → Try POST /api/v1/transactions/evaluate
+---
+
+# 🧪 Example Transaction
 
 ```json
 {
-  "account_id": "C_PRIYA_STUDENT_001",
-  "recipient_id": "C_UNKNOWN_RECIPIENT_999",
-  "amount": 92000.0,
-  "transaction_type": "TRANSFER",
-  "timestamp": "2026-01-15T23:45:00Z",
-  "account_age_days": 180,
-  "account_balance_before": 95000.0,
-  "is_new_recipient": true,
-  "sender_tx_count": 3
+  "account_id": "C_USER_789",
+  "recipient_id": "C_NEW_RECIPIENT_456",
+  "amount": 12000,
+  "transaction_type": "TRANSFER"
 }
 ```
 
-**Expected Response:**
+Example response:
+
 ```json
 {
   "verdict": "HOLD",
-  "fraud_score": 0.87,
-  "challenge_type": "BIOMETRIC",
-  "inference_latency_ms": 18.5
+  "fraud_score": 0.87
 }
 ```
 
 ---
 
-## 📚 Learning Path
+# 🔍 AI Investigation Pipeline
 
-Start here based on your goals:
+### IP Analysis
 
-| Goal | Start Here | Time |
-|------|-----------|------|
-| Understand the architecture | Read `docs/LEARNING_CURRICULUM.md` | 2 hrs |
-| Build fraud classifier | `notebooks/01_xgboost_training.ipynb` | 4-6 hrs |
-| Learn graph analysis | `notebooks/03_graph_analysis.ipynb` | 4-6 hrs |
-| Build AI agent | `notebooks/04_langgraph_agent.ipynb` | 6-8 hrs |
-| Deploy to production | `docs/DEPLOYMENT.md` | 2-3 hrs |
+- VPN detection
+- Geolocation checks
 
----
+### Device Fingerprinting
 
-## 🏗️ Project Structure
+- Missing device checks
+- Emulator detection
 
-```
-Fin_Gurdain/
-├── app/                    ← FastAPI application (Layer 1)
-├── workers/               ← Background workers (Layers 2-3)
-├── graph/                 ← Neo4j queries
-├── notebooks/             ← Learning & experiments
-├── docs/                  ← Documentation & curriculum
-├── docker-compose.yml     ← Infrastructure as code
-└── requirements.txt       ← Python dependencies
-```
+### Graph Analysis
 
----
+- Neo4j queries
+- Multi-hop relationship analysis
 
-## 🧠 Key Concepts (Explained Simply)
+### Rule Engine
 
-### **The 4 Layers**
+- Risk matrices
+- Fraud heuristics
 
-**Layer 1 — Hot Path (under 30ms)**
-- Runs XGBoost + Autoencoder in parallel
-- Returns APPROVE, HOLD, or DENY instantly
-- Example: Priya's unusual ₹92K transfer → **HOLD** ⏸
+### OpenAI Synthesis
 
-**Layer 2 — Warm Path (seconds)**
-- Queries Neo4j for recipient's transaction network
-- Runs Louvain algorithm to find fraud rings
-- Example: Unknown recipient = money mule in ring → **Confirm HOLD**
-
-**Layer 3 — Deep Path**
-- AI agent autonomously investigates
-- Calls tools: query Neo4j, check risk scores, analyze patterns
-- Produces forensic investigation report
-
-**Layer 4 — Smart Response**
-- Not: "Your transaction is blocked" ❌
-- But: "Please authenticate with Face ID" ✓ (adaptive)
-- Levels: confirmation → biometric → behavior challenge
+- Human-readable forensic reports
 
 ---
 
-## 🚀 What You'll Build
+# 📚 Learning Resources
 
-### **Week 1: XGBoost Fraud Classifier**
-- Train model on transaction features
-- Achieve >95% accuracy
-- Optimize latency to <5ms
+Documentation:
 
-### **Week 2: Feature Engineering**
-- Extract user behavior patterns
-- Real-time feature computation
-- Redis-backed feature store
+- PROJECT_SETUP.md
+- SETUP.md
+- IMPLEMENTATION_STATUS.md
+- docs/LEARNING_CURRICULUM.md
 
-### **Week 3: Money Laundering Network Detection**
-- Query Neo4j transaction graphs
-- Run community detection (Louvain)
-- Identify money mule accounts
+Jupyter Notebooks:
 
-### **Week 4: AI Detective**
-- Build LangGraph agent
-- Orchestrate investigation tools
-- Generate forensic reports
-
-### **Week 5: Full System Integration**
-- Connect all 4 layers
-- Handle 1000s concurrent transactions
-- Monitor and optimize
+- Data Understanding
+- EDA & Insights
+- Feature Engineering
+- XGBoost Training
+- Autoencoder Training
+- SHAP Explainability
 
 ---
 
-## 🐛 Troubleshooting
+# 🧪 Testing
 
-**Docker services not starting?**
+Run:
+
 ```bash
-docker-compose down -v
-docker-compose up -d
-docker-compose logs neo4j  # Check Neo4j specifically
-```
-
-**Connection refused on port 8000?**
-```bash
-# Kill any process using 8000
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-```
-
-**Neo4j won't accept passwords?**
-```bash
-# Reset Neo4j (delete all data)
-docker exec fin_guardian_neo4j rm -rf /data/databases/*
-docker restart fin_guardian_neo4j
+pytest
 ```
 
 ---
 
-## 📖 Next Steps
+# 🚧 Roadmap
 
-1. **Read the full curriculum:** `docs/LEARNING_CURRICULUM.md`
-2. **Start a notebook:** `notebooks/01_xgboost_training.ipynb`
-3. **Set up infrastructure:** Follow "Quick Start" above
-4. **Join the journey:** Build Fin-Guardian AI with us!
-
----
-
-## 🎓 Resources
-
-- **Your Design Document:** `Fin-Guardian-AI-Document.docx`
-- **Project Setup Guide:** `PROJECT_SETUP.md`
-- **Learning Curriculum:** `docs/LEARNING_CURRICULUM.md`
-- **API Documentation:** `docs/API.md` (coming soon)
+- [ ] React + Vite frontend
+- [ ] Automatic transaction simulator
+- [ ] Interactive graph visualization
+- [ ] SHAP dashboard
+- [ ] Prometheus monitoring
+- [ ] OpenTelemetry tracing
+- [ ] Docker deployment
+- [ ] Kubernetes support
 
 ---
 
-**Questions?** Check `docs/LEARNING_CURRICULUM.md` for detailed explanations, or create an issue!
+# 👨‍💻 Author
 
-Happy learning! 🚀
+## Rohan Kaushik
+
+AI Engineer • Machine Learning • MLOps • Graph Intelligence
+
+### GitHub
+
+https://github.com/RohanKaushik032
+
+### LinkedIn
+
+https://www.linkedin.com/in/rohankaushik32/
+
+---
+
+# ⭐ Support
+
+If you found this project interesting, consider giving the repository a ⭐.
 

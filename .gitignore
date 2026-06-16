@@ -1,44 +1,73 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
+# =========================
 # Virtual environments
+# =========================
 myenv/
 venv/
 
-# Python cache
-__pycache__/
-*.pyc
-
-# Jupyter
-.ipynb_checkpoints/
-
+# =========================
 # Environment variables
+# =========================
 .env
 
-# VSCode
+# =========================
+# Python cache
+# =========================
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# VS Code
+# =========================
 .vscode/
 
+# =========================
 # Logs
+# =========================
 *.log
 
+# =========================
 # OS files
+# =========================
 .DS_Store
 Thumbs.db
+desktop.ini
 
+# =========================
 # Redis
+# =========================
 dump.rdb
 
-# Neo4j local database
+# =========================
+# Neo4j local data
+# =========================
 neo4j/data/
 
+# =========================
 # Temporary files
+# =========================
 *.tmp
-
 ~$*
+
+# =========================
+# Extracted duplicate files
+# =========================
 *_extracted.txt
 
+# =========================
 # Large datasets
+# =========================
 dataset/*.csv
 
-# Training splits
+# =========================
+# Training split files
+# =========================
 artifacts/train.csv
 artifacts/test.csv
 artifacts/val.csv
