@@ -1,0 +1,21 @@
+{
+  "features": [
+    "hour_sin",
+    "hour_cos",
+    "day_sin",
+    "day_cos",
+    "amount_log",
+    "amount_to_balance_ratio",
+    "balance_error_orig_log",
+    "balance_error_dest_log",
+    "sender_zeroed",
+    "dest_was_empty",
+    "is_new_recipient",
+    "has_location",
+    "has_device_id",
+    "sender_tx_count",
+    "recipient_tx_count",
+    "type_encoded"
+  ],
+  "target": "isFraud"
+}

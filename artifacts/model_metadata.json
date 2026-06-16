@@ -1,0 +1,29 @@
+{
+  "features": [
+    "hour_sin",
+    "hour_cos",
+    "day_sin",
+    "day_cos",
+    "amount_log",
+    "amount_to_balance_ratio",
+    "balance_error_orig_log",
+    "balance_error_dest_log",
+    "sender_zeroed",
+    "dest_was_empty",
+    "is_new_recipient",
+    "has_location",
+    "has_device_id",
+    "sender_tx_count",
+    "recipient_tx_count",
+    "type_encoded"
+  ],
+  "target": "isFraud",
+  "n_features": 16,
+  "best_iteration": 0,
+  "best_val_auc_pr": 1.0,
+  "hold_threshold": 0.44620001316070557,
+  "deny_threshold": 0.6299999952316284,
+  "train_rows": 1939286,
+  "val_rows": 415561,
+  "scale_pos_weight": 532.8
+}

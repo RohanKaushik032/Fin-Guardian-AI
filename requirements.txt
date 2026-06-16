@@ -1,0 +1,36 @@
+# Core API Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+httpx==0.25.0
+
+# Data Validation & Configuration
+pydantic==2.7.1
+pydantic-settings==2.1.0
+
+# Logging
+loguru==0.7.2
+
+# Message Queue (pure Python, no compilation needed)
+aiokafka==0.10.0
+
+# Machine Learning - using only pre-built wheels
+torch==2.11.0
+xgboost==2.0.1
+pandas==2.1.4
+
+# Model Explainability
+shap==0.44.0
+
+# ONNX Runtime (pre-built)
+onnxruntime==1.18.0
+
+# Security — API key auth + rate limiting
+slowapi>=0.1.9
+
+# Caching / Feature store
+redis>=4.6.0
+
+# AI Detective — LangGraph + OpenAI
+langgraph>=0.2.0
+langchain-openai>=0.1.0
+openai>=1.30.0

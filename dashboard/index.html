@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fin-Guardian AI — Fraud Command Center</title>
+  
+  <!-- Google Fonts: Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Vis.js Standalone (Dynamic Network Explorer) -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkbg: '#050811',
+            surface: '#0B0F19',
+            surface2: '#121727',
+            border: '#1F2A3F',
+            border2: '#2F3C56',
+            textMain: '#E8F1FC',
+            textMuted: '#7D8C9F',
+            textMuted2: '#526173',
+            deny: '#FF3D5A',
+            denyDim: 'rgba(255, 61, 90, 0.12)',
+            hold: '#FFAB2E',
+            holdDim: 'rgba(255, 171, 46, 0.12)',
+            approve: '#38BDF8',
+            approveDim: 'rgba(56, 189, 248, 0.10)',
+            blueAccent: '#38BDF8',
+            purpleAccent: '#A78BFA',
+            greenAccent: '#34D399',
+            greenDim: 'rgba(52, 211, 153, 0.10)'
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #050811;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+    }
+    
+    /* Premium glow panels */
+    .glass-panel {
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(31, 42, 63, 0.5);
+    }
+
+    .glass-input {
+      background: rgba(5, 8, 17, 0.6);
+      border: 1px solid rgba(31, 42, 63, 0.8);
+      color: #E8F1FC;
+      transition: all 0.2s ease;
+    }
+
+    .glass-input:focus {
+      border-color: #38BDF8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+      outline: none;
+    }
+
+    /* Webkit scrollbar configurations */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(5, 8, 17, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(31, 42, 63, 0.9);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.4);
+    }
+
+    /* Keyframes for alerts and timelines */
+    @keyframes slide-in-timeline {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .timeline-anim {
+      animation: slide-in-timeline 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Terminal blinking cursor */
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+    .cursor-blink {
+      animation: blink 1s step-end infinite;
+    }
+  </style>
+</head>
+<body class="text-textMain min-h-screen flex text-sm">
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside class="w-64 bg-surface border-r border-border flex flex-col justify-between z-10 shrink-0">
+    <div>
+      <!-- Brand Logo -->
+      <div class="p-6 border-b border-border flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blueAccent to-purpleAccent flex items-center justify-center shadow-lg shadow-blueAccent/10">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-darkbg"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-md text-textMain tracking-wide">Fin-Guardian <span class="text-blueAccent">AI</span></h1>
+          <span class="text-[9px] text-textMuted uppercase tracking-widest font-bold">Fraud Ops Platform</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="px-4 py-6 space-y-1">
+        <button onclick="switchTab('overview')" id="nav-btn-overview" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-textMuted hover:text-textMain hover:bg-surface2">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Overview</span>
+        </button>
+        <button onclick="switchTab('sandbox')" id="nav-btn-sandbox" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-textMuted hover:text-textMain hover:bg-surface2">
+          <i data-lucide="beaker" class="w-4 h-4"></i>
+          <span>Transaction Sandbox</span>
+        </button>
+        <button onclick="switchTab('investigations')" id="nav-btn-investigations" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-textMuted hover:text-textMain hover:bg-surface2">
+          <i data-lucide="file-search" class="w-4 h-4"></i>
+          <span>AI Investigations</span>
+        </button>
+        <button onclick="switchTab('graph')" id="nav-btn-graph" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-textMuted hover:text-textMain hover:bg-surface2">
+          <i data-lucide="network" class="w-4 h-4"></i>
+          <span>Graph Explorer</span>
+        </button>
+        <button onclick="switchTab('observability')" id="nav-btn-observability" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-textMuted hover:text-textMain hover:bg-surface2">
+          <i data-lucide="gauge" class="w-4 h-4"></i>
+          <span>Observability</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer (Clock, Status, Endpoint Settings) -->
+    <div class="p-4 border-t border-border space-y-3 bg-surface/50">
+      <div class="flex items-center justify-between text-[11px] text-textMuted">
+        <span class="font-semibold uppercase tracking-wider">GATEWAY ENDPOINT</span>
+        <button onclick="toggleEndpointModal()" class="text-blueAccent hover:underline flex items-center gap-1 font-medium">
+          <i data-lucide="settings" class="w-3 h-3"></i> Edit
+        </button>
+      </div>
+      <div class="text-[11px] bg-darkbg border border-border rounded px-2.5 py-1.5 font-mono text-textMuted truncate" id="endpoint-display">
+        http://127.0.0.1:8000
+      </div>
+      <div class="flex items-center justify-between pt-1 border-t border-border/40">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-textMuted" id="ws-pulse"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-textMuted" id="ws-light"></span>
+          </span>
+          <span class="text-xs text-textMuted font-semibold" id="ws-status">Connecting</span>
+        </div>
+        <div class="text-xs font-mono text-textMuted" id="live-clock">--:--:--</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN VIEW WRAPPER ==================== -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <!-- Global Connection Overlay -->
+    <div id="connection-overlay" class="absolute inset-0 z-40 bg-darkbg/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 transition-all duration-300">
+      <div class="relative w-16 h-16 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-2 border-border border-t-blueAccent animate-spin"></div>
+        <i data-lucide="shield" class="w-6 h-6 text-blueAccent"></i>
+      </div>
+      <h2 class="text-lg font-bold text-textMain mt-2">Fin-Guardian AI</h2>
+      <p class="text-xs text-textMuted text-center max-w-xs leading-relaxed">
+        Establishing connection to FastAPI command center gateway. Verify that the server is running locally...
+      </p>
+      <button onclick="bypassConnectionOverlay()" class="mt-4 px-4 py-2 bg-surface2 border border-border hover:bg-border text-xs font-bold text-textMain rounded-lg transition-all">
+        Bypass Check (Offline/Simulation Mode)
+      </button>
+    </div>
+
+    <!-- Dynamic Endpoint Modal -->
+    <div id="endpoint-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+      <div class="glass-panel w-96 p-6 rounded-xl space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-textMain flex items-center gap-2">
+            <i data-lucide="cpu" class="w-4 h-4 text-blueAccent"></i> Configure API Target
+          </h3>
+          <button onclick="toggleEndpointModal()" class="text-textMuted hover:text-textMain">
+            <i data-lucide="x" class="w-4.5 h-4.5"></i>
+          </button>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] text-textMuted font-semibold tracking-wider uppercase">FASTAPI HOST URL</label>
+          <input type="text" id="endpoint-input" class="w-full bg-darkbg border border-border focus:border-blueAccent rounded-lg px-3 py-2 text-xs text-textMain font-mono focus:outline-none" value="http://127.0.0.1:8000">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="saveEndpoint()" class="flex-1 bg-gradient-to-r from-blueAccent to-purpleAccent hover:opacity-90 text-darkbg rounded-lg py-2.5 text-xs font-bold transition-all">
+            Apply changes
+          </button>
+          <button onclick="toggleEndpointModal()" class="flex-1 bg-surface2 border border-border hover:bg-border text-textMain rounded-lg py-2.5 text-xs font-semibold transition-all">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ==================== VIEW: OVERVIEW ==================== -->
+    <div id="view-overview" class="view-panel flex-1 flex flex-col overflow-hidden">
+      <!-- Top header bar -->
+      <header class="h-16 border-b border-border px-8 flex items-center justify-between bg-surface/30 shrink-0">
+        <h2 class="text-md font-bold text-textMain tracking-wide flex items-center gap-2">
+          <i data-lucide="command" class="w-4.5 h-4.5 text-blueAccent"></i> Live Threat Operations Feed
+        </h2>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2.5 py-1 bg-greenDim border border-greenAccent/20 text-greenAccent rounded-full flex items-center gap-1 font-bold animate-pulse">
+            <span class="w-1.5 h-1.5 rounded-full bg-greenAccent"></span> LIVE TIMELINE ACTIVE
+          </span>
+        </div>
+      </header>
+
+      <!-- Panel Content scrollable -->
+      <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <!-- Metrics Counters Card Row -->
+        <div class="grid grid-cols-5 gap-4">
+          <div class="glass-panel rounded-xl p-5 border-l-4 border-l-purpleAccent shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-200">
+            <div class="flex justify-between items-start text-textMuted mb-2">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Total Evaluated</span>
+              <i data-lucide="database" class="w-4 h-4 text-purpleAccent/60"></i>
+            </div>
+            <div class="text-3xl font-extrabold text-purpleAccent font-mono mt-1" id="m-total">0</div>
+            <div class="text-[10px] text-textMuted mt-1">Full pipeline executions</div>
+          </div>
+          
+          <div class="glass-panel rounded-xl p-5 border-l-4 border-l-greenAccent shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-200">
+            <div class="flex justify-between items-start text-textMuted mb-2">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Fast Approved</span>
+              <i data-lucide="check-circle2" class="w-4 h-4 text-greenAccent/60"></i>
+            </div>
+            <div class="text-3xl font-extrabold text-greenAccent font-mono mt-1" id="m-approved">0</div>
+            <div class="text-[10px] text-textMuted mt-1">Low-risk quick release</div>
+          </div>
+          
+          <div class="glass-panel rounded-xl p-5 border-l-4 border-l-hold shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-200">
+            <div class="flex justify-between items-start text-textMuted mb-2">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Held Investigations</span>
+              <i data-lucide="shield-question" class="w-4 h-4 text-hold/60"></i>
+            </div>
+            <div class="text-3xl font-extrabold text-hold font-mono mt-1" id="m-held">0</div>
+            <div class="text-[10px] text-textMuted mt-1">Pending AI compliance check</div>
+          </div>
+          
+          <div class="glass-panel rounded-xl p-5 border-l-4 border-l-deny shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-200">
+            <div class="flex justify-between items-start text-textMuted mb-2">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Blocked (Deny)</span>
+              <i data-lucide="ban" class="w-4 h-4 text-deny/60"></i>
+            </div>
+            <div class="text-3xl font-extrabold text-deny font-mono mt-1" id="m-blocked">0</div>
+            <div class="text-[10px] text-textMuted mt-1">Confirmed fraud attempts</div>
+          </div>
+          
+          <div class="glass-panel rounded-xl p-5 border-l-4 border-l-blueAccent shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-200">
+            <div class="flex justify-between items-start text-textMuted mb-2">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Avg Latency</span>
+              <i data-lucide="zap" class="w-4 h-4 text-blueAccent/60"></i>
+            </div>
+            <div class="text-3xl font-extrabold text-blueAccent font-mono mt-1" id="m-latency">—</div>
+            <div class="text-[10px] text-textMuted mt-1">Target SLA: &lt;30ms</div>
+          </div>
+        </div>
+
+        <!-- Main dashboard split grid -->
+        <div class="grid grid-cols-12 gap-6 items-start">
+          
+          <!-- Timeline alert feed (8/12 width) -->
+          <div class="col-span-8 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted">Transaction Activity Stream</h3>
+              <button onclick="clearDashboardFeed()" class="text-xs text-textMuted hover:text-textMain border border-border px-3 py-1 rounded bg-surface/40 hover:bg-surface2 transition-all">
+                Clear Timeline
+              </button>
+            </div>
+            <!-- Timeline container -->
+            <div class="glass-panel rounded-xl p-4 min-h-[400px] max-h-[550px] overflow-y-auto space-y-3" id="timeline-container">
+              <!-- Empty state -->
+              <div class="flex flex-col items-center justify-center py-24 text-center text-textMuted space-y-3" id="timeline-empty-state">
+                <div class="w-12 h-12 rounded-full border border-border flex items-center justify-center">
+                  <i data-lucide="inbox" class="w-6 h-6 text-textMuted/40"></i>
+                </div>
+                <div>
+                  <p class="font-bold text-textMain text-sm">No transactions stream detected yet</p>
+                  <p class="text-xs text-textMuted max-w-xs mt-1">
+                    Send transactions to the endpoint or configure and start the live simulator in the Sandbox tab.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gauges and Health checklists (4/12 width) -->
+          <div class="col-span-4 space-y-6">
+            
+            <!-- Risk score Gauge component -->
+            <div class="glass-panel rounded-xl p-5 space-y-4">
+              <h3 class="text-xs font-semibold text-textMuted uppercase tracking-wider">Last Risk Score Gauge</h3>
+              <div class="flex flex-col items-center justify-center py-4">
+                <div class="relative w-48 h-28 flex items-center justify-center overflow-hidden">
+                  <svg class="w-full h-full" viewBox="0 0 140 80">
+                    <defs>
+                      <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#34D399" />
+                        <stop offset="50%" stop-color="#FFAB2E" />
+                        <stop offset="100%" stop-color="#FF3D5A" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 15 72 A 55 55 0 0 1 125 72" fill="none" stroke="#1F2A3F" stroke-width="10" stroke-linecap="round" />
+                    <path id="gauge-fill" d="M 15 72 A 55 55 0 0 1 125 72" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="173" stroke-dashoffset="173" class="transition-all duration-1000 ease-out" />
+                    <line id="gauge-needle" x1="70" y1="72" x2="70" y2="24" stroke="#E8F1FC" stroke-width="2.5" stroke-linecap="round" style="transform-origin: 70px 72px; transform: rotate(-90deg);" class="transition-all duration-1000 ease-out" />
+                    <circle cx="70" cy="72" r="5" fill="#E8F1FC" />
+                  </svg>
+                  <div class="absolute bottom-0 text-center">
+                    <div class="text-3xl font-extrabold text-textMain" id="gauge-val">0.0%</div>
+                    <div class="text-[10px] text-textMuted font-medium" id="gauge-label">Awaiting data...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Health Status checklist card -->
+            <div class="glass-panel rounded-xl p-5 space-y-4">
+              <h3 class="text-xs font-semibold text-textMuted uppercase tracking-wider flex justify-between items-center">
+                <span>Infrastructure Health</span>
+                <span class="w-2 h-2 rounded-full bg-textMuted inline-block" id="health-glow"></span>
+              </h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between p-2 rounded bg-darkbg border border-border/40">
+                  <span class="text-textMuted flex items-center gap-2"><i data-lucide="cpu" class="w-3.5 h-3.5 text-blueAccent"></i> ML Models Engine</span>
+                  <span class="font-bold text-textMuted font-mono uppercase" id="h-models">checking...</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-darkbg border border-border/40">
+                  <span class="text-textMuted flex items-center gap-2"><i data-lucide="database" class="w-3.5 h-3.5 text-purpleAccent"></i> Redis Cache Store</span>
+                  <span class="font-bold text-textMuted font-mono uppercase" id="h-redis">checking...</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-darkbg border border-border/40">
+                  <span class="text-textMuted flex items-center gap-2"><i data-lucide="git-fork" class="w-3.5 h-3.5 text-pink-400"></i> Neo4j Graph DB</span>
+                  <span class="font-bold text-textMuted font-mono uppercase" id="h-neo4j">checking...</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-darkbg border border-border/40">
+                  <span class="text-textMuted flex items-center gap-2"><i data-lucide="server" class="w-3.5 h-3.5 text-hold"></i> Kafka Cluster</span>
+                  <span class="font-bold text-textMuted font-mono uppercase" id="h-kafka">checking...</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-darkbg border border-border/40">
+                  <span class="text-textMuted flex items-center gap-2"><i data-lucide="users" class="w-3.5 h-3.5 text-greenAccent"></i> WS Connections</span>
+                  <span class="font-bold text-textMuted font-mono" id="h-ws-clients">—</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: SANDBOX ==================== -->
+    <div id="view-sandbox" class="view-panel flex-1 flex flex-col overflow-hidden hidden">
+      <header class="h-16 border-b border-border px-8 flex items-center justify-between bg-surface/30 shrink-0">
+        <h2 class="text-md font-bold text-textMain tracking-wide flex items-center gap-2">
+          <i data-lucide="beaker" class="w-4.5 h-4.5 text-blueAccent"></i> Simulation Sandbox Lab
+        </h2>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-8 grid grid-cols-12 gap-8 items-start">
+        
+        <!-- Left: Transaction Manual Creator Form (7/12) -->
+        <div class="col-span-7 glass-panel rounded-xl p-6 space-y-6">
+          <h3 class="text-sm font-bold text-textMain border-b border-border/60 pb-3 flex items-center gap-2">
+            <i data-lucide="keyboard" class="w-4.5 h-4.5 text-blueAccent"></i> Manual Input Payload
+          </h3>
+
+          <form id="sandbox-form" onsubmit="submitManualTransaction(event)" class="grid grid-cols-2 gap-4 text-xs">
+            <!-- Transaction Core details -->
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Sender Account ID</label>
+              <input type="text" id="sb-account-id" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="C_SENDER_MOHAN_98">
+            </div>
+            
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Recipient Account ID</label>
+              <input type="text" id="sb-recipient-id" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="C_MERCHANT_AMAZON">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Amount (INR)</label>
+              <input type="number" step="0.01" id="sb-amount" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="450.00">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Transaction Type</label>
+              <select id="sb-type" class="w-full glass-input rounded-lg px-3 py-2 text-xs">
+                <option value="TRANSFER">TRANSFER (Evaluated)</option>
+                <option value="CASH_OUT">CASH_OUT (Evaluated)</option>
+                <option value="PAYMENT" selected>PAYMENT (Fast Approved)</option>
+                <option value="CASH_IN">CASH_IN (Fast Approved)</option>
+                <option value="DEBIT">DEBIT (Fast Approved)</option>
+              </select>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Account Balance Before (INR)</label>
+              <input type="number" step="0.01" id="sb-balance" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="8500.00">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Account Age (Days)</label>
+              <input type="number" id="sb-age" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="365">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Sender Lifetime Tx Count</label>
+              <input type="number" id="sb-tx-count" required class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="42">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Device ID</label>
+              <input type="text" id="sb-device-id" class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="dev_bgl_laptop_902">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Latitude</label>
+              <input type="number" step="0.0001" id="sb-lat" class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="12.9716">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[10px] text-textMuted font-semibold uppercase">Longitude</label>
+              <input type="number" step="0.0001" id="sb-lon" class="w-full glass-input rounded-lg px-3 py-2 text-xs" value="77.5946">
+            </div>
+
+            <!-- Suspicion triggers -->
+            <div class="col-span-2 py-2 grid grid-cols-3 gap-2 border-t border-border/50 mt-2">
+              <label class="flex items-center gap-2 cursor-pointer select-none text-textMuted hover:text-textMain">
+                <input type="checkbox" id="sb-new-recipient" class="rounded border-border bg-darkbg text-blueAccent focus:ring-0 w-4 h-4">
+                <span>New Recipient</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer select-none text-textMuted hover:text-textMain" onclick="toggleSbField('sb-device-id')">
+                <input type="checkbox" id="sb-omit-device" class="rounded border-border bg-darkbg text-blueAccent focus:ring-0 w-4 h-4">
+                <span>Omit Device ID</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer select-none text-textMuted hover:text-textMain" onclick="toggleSbField('sb-lat', 'sb-lon')">
+                <input type="checkbox" id="sb-omit-location" class="rounded border-border bg-darkbg text-blueAccent focus:ring-0 w-4 h-4">
+                <span>Omit GPS Location</span>
+              </label>
+            </div>
+
+            <button type="submit" class="col-span-2 mt-4 bg-gradient-to-r from-blueAccent to-purpleAccent hover:opacity-90 text-darkbg rounded-lg py-3 text-sm font-extrabold shadow-lg shadow-blueAccent/10 flex items-center justify-center gap-2 transition-all">
+              <i data-lucide="play" class="w-4 h-4 text-darkbg"></i> Submit For Real-time Evaluation
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Preset Loaders & Streaming Automation Control (5/12) -->
+        <div class="col-span-5 space-y-6">
+          <!-- Preset buttons panel -->
+          <div class="glass-panel rounded-xl p-5 space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purpleAccent"></i> Attack Preset Templates
+            </h3>
+            <div class="grid grid-cols-1 gap-2.5">
+              <button onclick="loadPreset('legitimate')" class="w-full flex justify-between items-center p-3 rounded-lg border border-border bg-darkbg/40 hover:bg-surface2 transition-all text-left group">
+                <div>
+                  <div class="font-bold text-textMain flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-approve"></span> Legitimate Merchant payment
+                  </div>
+                  <div class="text-[10px] text-textMuted mt-0.5">Regular merchant, recognized device, low amount</div>
+                </div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-textMuted group-hover:translate-x-1 transition-transform"></i>
+              </button>
+              
+              <button onclick="loadPreset('midnight')" class="w-full flex justify-between items-center p-3 rounded-lg border border-border bg-darkbg/40 hover:bg-surface2 transition-all text-left group">
+                <div>
+                  <div class="font-bold text-textMain flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-deny animate-pulse"></span> Midnight Ghost Account Drain
+                  </div>
+                  <div class="text-[10px] text-textMuted mt-0.5">High value wire transfer at 11:45 PM, empty device, drains total balance</div>
+                </div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-textMuted group-hover:translate-x-1 transition-transform"></i>
+              </button>
+
+              <button onclick="loadPreset('mule')" class="w-full flex justify-between items-center p-3 rounded-lg border border-border bg-darkbg/40 hover:bg-surface2 transition-all text-left group">
+                <div>
+                  <div class="font-bold text-textMain flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-hold animate-pulse"></span> Suspect Mule Ring Hop
+                  </div>
+                  <div class="text-[10px] text-textMuted mt-0.5">Distant GPS coordinates, brand new recipient, zero history accounts</div>
+                </div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-textMuted group-hover:translate-x-1 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Automated Streaming Panel -->
+          <div class="glass-panel rounded-xl p-5 space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted flex items-center gap-1.5">
+              <i data-lucide="radio" class="w-3.5 h-3.5 text-blueAccent"></i> Live Automated Simulation
+            </h3>
+
+            <div class="space-y-4 text-xs">
+              <!-- Parameters -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-[10px] text-textMuted font-semibold uppercase">Stream Delay (seconds)</label>
+                  <select id="sim-delay" class="w-full glass-input rounded-lg px-2 py-1.5 text-xs">
+                    <option value="1">1 second</option>
+                    <option value="2" selected>2 seconds</option>
+                    <option value="5">5 seconds</option>
+                    <option value="10">10 seconds</option>
+                  </select>
+                </div>
+                
+                <div class="space-y-1">
+                  <label class="text-[10px] text-textMuted font-semibold uppercase">Chaos mode</label>
+                  <select id="sim-chaos" class="w-full glass-input rounded-lg px-2 py-1.5 text-xs">
+                    <option value="false" selected>Disabled (Normal)</option>
+                    <option value="true">Enabled (Rapid Blast)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-[10px] text-textMuted font-semibold uppercase">
+                  <span>LEGITIMATE TRANSACTIONS RATIO</span>
+                  <span id="sim-ratio-display" class="text-blueAccent">85%</span>
+                </div>
+                <input type="range" id="sim-ratio" min="0" max="100" value="85" oninput="document.getElementById('sim-ratio-display').innerText = this.value + '%'" class="w-full accent-blueAccent bg-darkbg border border-border h-1.5 rounded-lg appearance-none cursor-pointer">
+              </div>
+
+              <!-- Controller buttons -->
+              <div class="flex gap-2 pt-2">
+                <button onclick="toggleSimulation()" id="sim-toggle-btn" class="flex-1 bg-blueAccent hover:bg-blueAccent/90 text-darkbg rounded-lg py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all">
+                  <i data-lucide="play-circle" class="w-4 h-4 text-darkbg"></i> Start Simulator
+                </button>
+                <button onclick="generateRandomSandboxTx()" class="bg-surface2 hover:bg-border border border-border px-3.5 rounded-lg text-textMain transition-all" title="Trigger single random transaction">
+                  <i data-lucide="dices" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: INVESTIGATIONS ==================== -->
+    <div id="view-investigations" class="view-panel flex-1 flex flex-col overflow-hidden hidden">
+      <header class="h-16 border-b border-border px-8 flex items-center justify-between bg-surface/30 shrink-0">
+        <h2 class="text-md font-bold text-textMain tracking-wide flex items-center gap-2">
+          <i data-lucide="file-search" class="w-4.5 h-4.5 text-blueAccent"></i> Forensic Investigation Workspace
+        </h2>
+      </header>
+
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Left Sidebar list (width-80) -->
+        <div class="w-80 border-r border-border overflow-y-auto p-4 space-y-3 bg-surface/10 flex-shrink-0" id="inv-list">
+          <div class="text-[10px] text-textMuted font-bold uppercase tracking-wider px-2">Held / Blocked Cases</div>
+          <!-- Empty list state -->
+          <div class="text-xs text-textMuted px-2 py-8 text-center" id="inv-empty-state">
+            No active threat cases flagged for investigation yet.
+          </div>
+        </div>
+
+        <!-- Right detail workspace -->
+        <div class="flex-1 flex flex-col overflow-hidden" id="inv-detail-area">
+          <div class="flex-1 flex flex-col items-center justify-center text-textMuted space-y-3" id="inv-no-selection-state">
+            <div class="w-12 h-12 rounded-full border border-border flex items-center justify-center">
+              <i data-lucide="shield-question" class="w-6 h-6 text-textMuted/40"></i>
+            </div>
+            <p class="text-xs">Select a threat card from the sidebar list to inspect the investigation workspace</p>
+          </div>
+
+          <!-- Selection details, tab controls and sub-views (hidden by default) -->
+          <div id="inv-workspace" class="flex-1 flex flex-col overflow-hidden hidden">
+            <!-- Workspace Summary Header -->
+            <div class="p-6 border-b border-border bg-surface/20 shrink-0 flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-3">
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase font-mono border" id="inv-verdict-badge">HOLD</span>
+                  <span class="text-xs font-semibold text-textMain font-mono" id="inv-tx-id">unknown</span>
+                </div>
+                <div class="text-xs text-textMuted mt-1">
+                  Account: <span id="inv-acc-id" class="font-bold text-textMain">C_001</span> · Amount: <span id="inv-amount" class="font-bold text-textMain">₹0</span> · Score: <span id="inv-score" class="font-bold text-deny">0.0%</span>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="resolveCase('APPROVE')" class="px-3 py-1.5 bg-greenDim border border-greenAccent/20 hover:bg-greenAccent hover:text-darkbg text-greenAccent text-xs font-bold rounded-lg transition-all">
+                  Approve / Release
+                </button>
+                <button onclick="resolveCase('DENY')" class="px-3 py-1.5 bg-denyDim border border-deny/20 hover:bg-deny hover:text-darkbg text-deny text-xs font-bold rounded-lg transition-all">
+                  Block / Freeze Account
+                </button>
+              </div>
+            </div>
+
+            <!-- Workspace Tabs controller -->
+            <div class="flex border-b border-border shrink-0 bg-surface/10">
+              <button onclick="switchInvSubTab('report')" id="inv-sub-tab-report" class="inv-sub-tab px-6 py-3 border-b-2 border-transparent text-xs font-semibold text-textMuted hover:text-textMain transition-all">
+                AI Forensic summary
+              </button>
+              <button onclick="switchInvSubTab('trace')" id="inv-sub-tab-trace" class="inv-sub-tab px-6 py-3 border-b-2 border-transparent text-xs font-semibold text-textMuted hover:text-textMain transition-all">
+                LangGraph Trace logs
+              </button>
+            </div>
+
+            <!-- Tab: Forensic Report workspace -->
+            <div id="inv-workspace-report" class="inv-workspace-panel flex-1 overflow-y-auto p-6 space-y-6">
+              <div class="grid grid-cols-3 gap-4">
+                <div class="glass-panel p-4 rounded-lg bg-darkbg/40 border border-border/40 text-center">
+                  <div class="text-[10px] text-textMuted uppercase font-semibold">Graph Mule Risk</div>
+                  <div class="text-sm font-bold text-textMain mt-1" id="rep-graph-risk">UNKNOWN</div>
+                </div>
+                <div class="glass-panel p-4 rounded-lg bg-darkbg/40 border border-border/40 text-center">
+                  <div class="text-[10px] text-textMuted uppercase font-semibold">Device Health</div>
+                  <div class="text-sm font-bold text-textMain mt-1" id="rep-device-risk">UNKNOWN</div>
+                </div>
+                <div class="glass-panel p-4 rounded-lg bg-darkbg/40 border border-border/40 text-center">
+                  <div class="text-[10px] text-textMuted uppercase font-semibold">VPN/Proxy Flag</div>
+                  <div class="text-sm font-bold text-textMain mt-1" id="rep-vpn">UNKNOWN</div>
+                </div>
+              </div>
+
+              <!-- Detailed report box -->
+              <div class="glass-panel rounded-xl p-5 space-y-4">
+                <div class="flex justify-between items-center">
+                  <h4 class="text-xs font-bold text-textMuted uppercase tracking-wider">Executive analyst narrative</h4>
+                  <div class="text-[10px] text-purpleAccent font-mono px-2 py-0.5 border border-purpleAccent/20 bg-purpleAccent/5 rounded-full" id="rep-duration">
+                    0ms investigation
+                  </div>
+                </div>
+                <div class="p-4 bg-darkbg rounded-lg border border-border/40 font-serif leading-relaxed text-sm italic text-textMain" id="rep-narrative">
+                  Retrieving report metadata...
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[10px] font-bold text-textMuted uppercase tracking-wider">Risk Factors Triggered:</span>
+                  <ul class="text-xs text-textMuted space-y-1 list-disc pl-4" id="rep-factors-list"></ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: LangGraph Trace console terminal -->
+            <div id="inv-workspace-trace" class="inv-workspace-panel flex-1 overflow-y-auto p-6 hidden">
+              <div class="w-full h-full bg-[#03060b] border border-border rounded-xl p-4 font-mono text-xs flex flex-col justify-between shadow-inner">
+                <!-- Terminal logs container -->
+                <div class="flex-1 overflow-y-auto space-y-2 text-textMuted pr-2" id="trace-terminal-logs"></div>
+                <!-- Terminal input mimic line -->
+                <div class="border-t border-border/30 pt-3 flex items-center gap-1.5 text-textMuted shrink-0">
+                  <span class="text-blueAccent font-bold">fingard-ops@detective:~$</span>
+                  <span class="text-textMain select-none" id="trace-terminal-cmd">inspect --txn-id ...</span>
+                  <span class="w-2 h-4 bg-blueAccent cursor-blink inline-block"></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: GRAPH ==================== -->
+    <div id="view-graph" class="view-panel flex-1 flex flex-col overflow-hidden hidden">
+      <header class="h-16 border-b border-border px-8 flex items-center justify-between bg-surface/30 shrink-0">
+        <h2 class="text-md font-bold text-textMain tracking-wide flex items-center gap-2">
+          <i data-lucide="network" class="w-4.5 h-4.5 text-blueAccent"></i> Real-time Transaction Graph Explorer
+        </h2>
+        <div class="flex gap-2">
+          <button onclick="fitGraphView()" class="px-3 py-1 bg-surface2 border border-border hover:bg-border text-xs font-semibold text-textMain rounded transition-all">
+            Fit Zoom
+          </button>
+          <button onclick="clearGraphData()" class="px-3 py-1 bg-surface2 border border-border hover:bg-border text-xs font-semibold text-textMain rounded transition-all">
+            Clear Canvas
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 flex overflow-hidden relative">
+        <!-- Vis.js canvas container -->
+        <div class="flex-1 bg-darkbg relative" id="network-graph-canvas"></div>
+        
+        <!-- Graph Overlay Information panel -->
+        <div class="absolute bottom-6 left-6 p-4 glass-panel rounded-xl max-w-sm pointer-events-auto space-y-2 z-10 shadow-2xl">
+          <h4 class="text-xs font-bold text-textMain flex items-center gap-1.5">
+            <i data-lucide="info" class="w-4 h-4 text-blueAccent"></i> Canvas Legend
+          </h4>
+          <p class="text-[11px] text-textMuted leading-relaxed">
+            Nodes represent accounts. Links represent evaluation operations. Click node to center. Zoom with mouse scroll.
+          </p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blueAccent"></span> Sender</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-greenAccent"></span> Recipient (Legit)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-deny"></span> Recipient (Suspicious)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: OBSERVABILITY ==================== -->
+    <div id="view-observability" class="view-panel flex-1 flex flex-col overflow-hidden hidden">
+      <header class="h-16 border-b border-border px-8 flex items-center justify-between bg-surface/30 shrink-0">
+        <h2 class="text-md font-bold text-textMain tracking-wide flex items-center gap-2">
+          <i data-lucide="gauge" class="w-4.5 h-4.5 text-blueAccent"></i> Observability & System Logs
+        </h2>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Cache counters -->
+          <div class="glass-panel rounded-xl p-5 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted flex items-center gap-1.5">
+              <i data-lucide="database" class="w-4 h-4 text-purpleAccent"></i> Redis Cache telemetry
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Transaction velocity keys</span>
+                <span class="font-bold text-textMain" id="obs-redis-keys">0</span>
+              </div>
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Z-Set sliding scoring TTL</span>
+                <span class="font-bold text-textMain">604,800 sec (7d)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kafka metrics -->
+          <div class="glass-panel rounded-xl p-5 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted flex items-center gap-1.5">
+              <i data-lucide="server" class="w-4 h-4 text-hold"></i> Message broker partitions
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Topic 'transactions.hold'</span>
+                <span class="font-bold text-textMain">Ready</span>
+              </div>
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Estimated worker lag</span>
+                <span class="font-bold text-greenAccent">0 messages</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ML Models configurations -->
+          <div class="glass-panel rounded-xl p-5 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-4 h-4 text-blueAccent"></i> XGBoost + Autoencoder schema
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Features list dimensionality</span>
+                <span class="font-bold text-textMain">19 engineered</span>
+              </div>
+              <div class="flex justify-between font-mono py-1 border-b border-border/40">
+                <span class="text-textMuted">Reconstruction SLA threshold</span>
+                <span class="font-bold text-textMain">0.05</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monospace Console logger -->
+        <div class="space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-textMuted">Command Center log stream</h3>
+          <div class="w-full h-[320px] bg-[#03060b] border border-border rounded-xl p-4 font-mono text-[11px] text-textMuted overflow-y-auto space-y-1.5" id="obs-console-logs">
+            <div class="text-textMuted/40">[2026-06-14T13:56:00Z] Console listener initialization complete...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ==================== GLOBAL APP STATE ====================
+    const appState = {
+      apiBaseUrl: localStorage.getItem('fg_api_base') || 'http://127.0.0.1:8000',
+      ws: null,
+      wsReconnectTimer: null,
+      currentTab: 'overview',
+      
+      // Counter metrics
+      counts: {
+        total: 0,
+        approved: 0,
+        held: 0,
+        blocked: 0
+      },
+      latencies: [],
+      
+      // Transactions memory cache
+      transactions: [],
+      investigations: {},
+      selectedCaseId: null,
+      
+      // Simulator settings
+      simActive: false,
+      simTimer: null,
+      
+      // Vis.js Graph Dataset variables
+      nodes: null,
+      edges: null,
+      network: null,
+
+      // UI locks
+      overlayBypassed: false
+    };
+
+    // ==================== INITIALIZATION & HELPER CLOCKS ====================
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set current values in inputs/configurations
+      document.getElementById('endpoint-display').innerText = appState.apiBaseUrl;
+      document.getElementById('endpoint-input').value = appState.apiBaseUrl;
+
+      // Start live visual clock
+      setInterval(() => {
+        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-IN', { hour12: false });
+      }, 1000);
+
+      // Start real-time health polling loop
+      pollSystemHealth();
+      setInterval(pollSystemHealth, 10000);
+
+      // Render Vis.js explorer canvas initial
+      initVisGraph();
+
+      // Launch WebSocket Connection
+      connectWebSocket();
+
+      // Render visual elements
+      lucide.createIcons();
+      switchTab('overview');
+    });
+
+    function bypassConnectionOverlay() {
+      appState.overlayBypassed = true;
+      document.getElementById('connection-overlay').classList.add('hidden');
+      logConsole('SYSTEM', 'Bypassed connection checks. Running in offline/simulation mockup mode.');
+      showToast('APPROVE', 0, 0, 'Offline Simulation Enabled');
+    }
+
+    // ==================== TAB MANAGEMENT ENGINE ====================
+    function switchTab(tabName) {
+      appState.currentTab = tabName;
+
+      // Update sidebar nav button visual state
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-surface2', 'text-textMain');
+        btn.classList.add('text-textMuted');
+      });
+      const activeBtn = document.getElementById(`nav-btn-${tabName}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-textMuted');
+        activeBtn.classList.add('bg-surface2', 'text-textMain');
+      }
+
+      // Hide all panels, reveal target
+      document.querySelectorAll('.view-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+      // Refresh Vis.js graph zoom fitting if target is graph
+      if (tabName === 'graph' && appState.network) {
+        setTimeout(() => {
+          appState.network.redraw();
+          appState.network.fit();
+        }, 150);
+      }
+    }
+
+    // ==================== API ENDPOINT EDITOR ====================
+    function toggleEndpointModal() {
+      const modal = document.getElementById('endpoint-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function saveEndpoint() {
+      const urlVal = document.getElementById('endpoint-input').value.trim();
+      if (urlVal) {
+        appState.apiBaseUrl = urlVal;
+        localStorage.setItem('fg_api_base', urlVal);
+        document.getElementById('endpoint-display').innerText = urlVal;
+        logConsole('SYSTEM', `Endpoint modified to target gateway: ${urlVal}`);
+        toggleEndpointModal();
+        
+        // Reconnect WS
+        if (appState.ws) {
+          appState.ws.close();
+        }
+        connectWebSocket();
+        pollSystemHealth();
+      }
+    }
+
+    // ==================== WEBSOCKET MANAGER ====================
+    function connectWebSocket() {
+      let endpoint = appState.apiBaseUrl;
+      // Convert http protocol to ws protocol
+      let wsProtocol = 'ws:';
+      if (endpoint.startsWith('https:')) {
+        wsProtocol = 'wss:';
+      }
+      let wsHost = endpoint.replace(/^https?:\/\//, '');
+      const wsUrl = `${wsProtocol}//${wsHost}/api/v1/ws/alerts`;
+
+      logConsole('WS_CLIENT', `Attempting WebSocket connection to: ${wsUrl}`);
+      
+      const ws = new WebSocket(wsUrl);
+      appState.ws = ws;
+
+      ws.onopen = () => {
+        logConsole('WS_CLIENT', 'Connection to command center gateway successfully established.');
+        
+        // Hide overlay if it wasn't bypassed
+        document.getElementById('connection-overlay').classList.add('hidden');
+        
+        // Update statuses
+        updateWSStatusIndicator('Connected', 'bg-greenAccent', 'bg-greenAccent');
+        
+        if (appState.wsReconnectTimer) {
+          clearTimeout(appState.wsReconnectTimer);
+          appState.wsReconnectTimer = null;
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          handleWebSocketMessage(payload);
+        } catch (e) {
+          logConsole('WS_CLIENT_ERR', `Failed to parse message payload: ${event.data}`);
+        }
+      };
+
+      ws.onclose = ws.onerror = () => {
+        updateWSStatusIndicator('Disconnected', 'bg-deny', 'bg-deny');
+        
+        if (!appState.overlayBypassed) {
+          document.getElementById('connection-overlay').classList.remove('hidden');
+        }
+
+        // Trigger delayed reconnect attempt
+        if (!appState.wsReconnectTimer) {
+          logConsole('WS_CLIENT', 'Connection lost. Scheduling reconnect in 3s...');
+          appState.wsReconnectTimer = setTimeout(connectWebSocket, 3000);
+        }
+      };
+    }
+
+    function updateWSStatusIndicator(label, lightClass, pulseClass) {
+      document.getElementById('ws-status').innerText = label;
+      
+      const light = document.getElementById('ws-light');
+      light.className = `relative inline-flex rounded-full h-2 w-2 ${lightClass}`;
+      
+      const pulse = document.getElementById('ws-pulse');
+      pulse.className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${pulseClass}`;
+    }
+
+    // ==================== SYSTEM HEALTH POLLER ====================
+    async function pollSystemHealth() {
+      try {
+        const response = await fetch(`${appStateStateUrl()}/health`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const health = await response.json();
+          updateHealthChecklist(health);
+        } else {
+          setHealthStatusDegraded();
+        }
+      } catch (e) {
+        setHealthStatusDegraded();
+      }
+    }
+
+    function appStateStateUrl() {
+      return appState.apiBaseUrl;
+    }
+
+    function updateHealthChecklist(h) {
+      const glow = document.getElementById('health-glow');
+      if (h.status === 'healthy') {
+        glow.className = 'w-2 h-2 rounded-full bg-greenAccent animate-pulse inline-block';
+      } else {
+        glow.className = 'w-2 h-2 rounded-full bg-hold inline-block';
+      }
+
+      setHealthItem('h-models', h.models_loaded ? 'LOADED' : 'OFFLINE', h.models_loaded ? 'text-greenAccent' : 'text-deny');
+      setHealthItem('h-redis', h.redis_connected ? 'ACTIVE' : 'OFFLINE', h.redis_connected ? 'text-greenAccent' : 'text-deny');
+      setHealthItem('h-neo4j', h.neo4j_connected ? 'ACTIVE' : 'OFFLINE', h.neo4j_connected ? 'text-greenAccent' : 'text-deny');
+      setHealthItem('h-kafka', h.kafka_connected ? 'ACTIVE' : 'OFFLINE', h.kafka_connected ? 'text-greenAccent' : 'text-deny');
+      document.getElementById('h-ws-clients').innerText = h.dashboard_clients || '0';
+    }
+
+    function setHealthItem(id, text, cls) {
+      const el = document.getElementById(id);
+      el.innerText = text;
+      el.className = `font-bold font-mono uppercase ${cls}`;
+    }
+
+    function setHealthStatusDegraded() {
+      const glow = document.getElementById('health-glow');
+      glow.className = 'w-2 h-2 rounded-full bg-deny inline-block';
+      setHealthItem('h-models', 'UNKNOWN', 'text-textMuted');
+      setHealthItem('h-redis', 'UNKNOWN', 'text-textMuted');
+      setHealthItem('h-neo4j', 'UNKNOWN', 'text-textMuted');
+      setHealthItem('h-kafka', 'UNKNOWN', 'text-textMuted');
+      document.getElementById('h-ws-clients').innerText = '—';
+    }
+
+    // ==================== WEBSOCKET MESSAGE HANDLER ====================
+    function handleWebSocketMessage(msg) {
+      logConsole('WS_INBOUND', `Received type: ${msg.type}`);
+
+      if (msg.type === 'HEARTBEAT') {
+        logConsole('WS_CLIENT', 'Heartbeat checklist acknowledged.');
+        return;
+      }
+
+      if (msg.type === 'SYSTEM_STATUS') {
+        document.getElementById('obs-redis-keys').innerText = msg.active_clients || '0'; // placeholder usage
+        return;
+      }
+
+      if (msg.type === 'FRAUD_ALERT') {
+        processIncomingAlert(msg);
+        return;
+      }
+
+      if (msg.type === 'INVESTIGATION_COMPLETE') {
+        processInvestigationComplete(msg);
+        return;
+      }
+
+      if (msg.type === 'EXPLANATION_COMPLETE') {
+        processExplanationComplete(msg);
+        return;
+      }
+    }
+
+    // ==================== PROCESS ALERTS & UPDATE DASHBOARD ====================
+    function processIncomingAlert(msg) {
+      // Add unique local ID if missing
+      const id = msg.transaction_id || Math.random().toString(36).substring(7);
+      
+      // Save in cache array
+      appState.transactions.unshift(msg);
+      if (appState.transactions.length > 150) {
+        appState.transactions.pop();
+      }
+
+      // Update counter statistics
+      appState.counts.total++;
+      if (msg.verdict === 'APPROVE') appState.counts.approved++;
+      else if (msg.verdict === 'HOLD') appState.counts.held++;
+      else if (msg.verdict === 'DENY') appState.counts.blocked++;
+
+      document.getElementById('m-total').innerText = appState.counts.total;
+      document.getElementById('m-approved').innerText = appState.counts.approved;
+      document.getElementById('m-held').innerText = appState.counts.held;
+      document.getElementById('m-blocked').innerText = appState.counts.blocked;
+
+      // Update avg latency
+      if (msg.latency_ms) {
+        appState.latencies.push(msg.latency_ms);
+        if (appState.latencies.length > 50) appState.latencies.shift();
+        const avg = appState.latencies.reduce((a,b) => a+b, 0) / appState.latencies.length;
+        document.getElementById('m-latency').innerText = `${avg.toFixed(1)}ms`;
+      }
+
+      // Animate SVG Gauge
+      const score = msg.risk_score || 0;
+      updateGaugeScore(score, msg.verdict);
+
+      // Render list card in Timeline
+      renderAlertCardInTimeline(msg);
+
+      // Add to Vis.js graph
+      addTransactionNode(msg);
+
+      // Push custom notification Toast
+      showToast(msg.verdict, msg.amount, msg.risk_score, msg.account_id);
+
+      // Trigger automatic detailed display setup in Investigations list if held/blocked
+      if (msg.verdict === 'HOLD' || msg.verdict === 'DENY') {
+        // Build empty state object in investigations map
+        appState.investigations[id] = {
+          alert: msg,
+          forensic: null,
+          logs: [
+            { t: new Date().toLocaleTimeString(), node: 'initialize', msg: 'Evaluator Hot-path triggered Celery deep queue listener.' },
+            { t: new Date().toLocaleTimeString(), node: 'gateway_verdict', msg: ` हॉट पाथ निर्णय (Hot path verdict): ${msg.verdict} with Combined Score: ${(msg.risk_score*100).toFixed(1)}%` },
+            { t: new Date().toLocaleTimeString(), node: 'shap_features', msg: `Key SHAP variables: ${JSON.stringify(msg.shap_features)}` }
+          ]
+        };
+        renderCaseCardInList(id);
+      }
+    }
+
+    function updateGaugeScore(score, verdict) {
+      const pct = Math.min(Math.max(score, 0), 1);
+      const totalArc = 173;
+      const offset = totalArc - (totalArc * pct);
+      const angle = -90 + (pct * 180);
+
+      document.getElementById('gauge-fill').style.strokeDashoffset = offset;
+      document.getElementById('gauge-needle').style.transform = `rotate(${angle}deg)`;
+      
+      const valEl = document.getElementById('gauge-val');
+      valEl.innerText = `${(pct * 100).toFixed(1)}%`;
+      
+      const lblEl = document.getElementById('gauge-label');
+      if (verdict === 'DENY') {
+        valEl.className = 'text-3xl font-extrabold text-deny';
+        lblEl.innerText = 'High Risk - Transaction Blocked';
+      } else if (verdict === 'HOLD') {
+        valEl.className = 'text-3xl font-extrabold text-hold';
+        lblEl.innerText = 'Medium Risk - Hold Audit Triggered';
+      } else {
+        valEl.className = 'text-3xl font-extrabold text-greenAccent';
+        lblEl.innerText = 'Low Risk - Released Approved';
+      }
+    }
+
+    function renderAlertCardInTimeline(msg) {
+      const parent = document.getElementById('timeline-container');
+      
+      // Remove empty state if present
+      const empty = document.getElementById('timeline-empty-state');
+      if (empty) empty.remove();
+
+      const card = document.createElement('div');
+      card.className = 'timeline-anim glass-panel hover:bg-surface2 border border-border p-4 rounded-xl flex justify-between items-start gap-4 cursor-pointer relative overflow-hidden transition-all duration-200';
+      
+      // Border left coloring
+      let verdictColor = 'border-l-approve';
+      let badgeClass = 'bg-approveDim border-approve/20 text-approve';
+      if (msg.verdict === 'HOLD') {
+        verdictColor = 'border-l-hold';
+        badgeClass = 'bg-holdDim border-hold/20 text-hold';
+      } else if (msg.verdict === 'DENY') {
+        verdictColor = 'border-l-deny';
+        badgeClass = 'bg-denyDim border-deny/20 text-deny';
+      }
+      card.classList.add(verdictColor);
+      card.style.borderLeftWidth = '4px';
+
+      const timeStr = new Date(msg.timestamp || new Date()).toLocaleTimeString('en-IN', { hour12: false });
+      const inrAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(msg.amount);
+
+      // Generate SHAP chips if features present
+      let shapHTML = '';
+      if (msg.shap_features && msg.shap_features.length > 0) {
+        shapHTML = `<div class="flex flex-wrap gap-1.5 mt-2.5">`;
+        msg.shap_features.forEach(f => {
+          const c = f.impact > 0 ? 'border-deny/20 bg-denyDim text-deny' : 'border-approve/20 bg-greenDim text-greenAccent';
+          shapHTML += `
+            <span class="text-[9px] font-mono px-2 py-0.5 border rounded-full ${c}">
+              ${f.feature.replace(/_/g, ' ')}: ${f.impact > 0 ? '+' : ''}${f.impact.toFixed(3)}
+            </span>
+          `;
+        });
+        shapHTML += `</div>`;
+      }
+
+      card.innerHTML = `
+        <div class="flex-1 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 border rounded text-[10px] font-extrabold ${badgeClass}">${msg.verdict}</span>
+            <span class="text-xs font-mono font-bold text-textMain">${msg.account_id}</span>
+            <span class="text-[10px] text-textMuted font-mono">ID: ${msg.transaction_id.substring(0, 8)}...</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-lg font-extrabold text-textMain">${inrAmount}</span>
+            <span class="text-xs text-textMuted">&rarr; ${msg.challenge_type || 'NONE'}</span>
+          </div>
+          <div class="w-full bg-darkbg h-1 rounded overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-greenAccent via-hold to-deny" style="width: ${Math.round(msg.risk_score * 100)}%"></div>
+          </div>
+          ${shapHTML}
+        </div>
+        <div class="text-right shrink-0 flex flex-col items-end justify-between h-full space-y-4">
+          <span class="text-[10px] text-textMuted font-mono font-semibold">${timeStr}</span>
+          <span class="text-[10px] text-textMuted font-mono flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i> ${msg.latency_ms.toFixed(1)}ms</span>
+        </div>
+      `;
+
+      parent.prepend(card);
+      lucide.createIcons({ parent: card });
+
+      // Click to select/view investigation
+      card.onclick = () => {
+        if (msg.verdict === 'HOLD' || msg.verdict === 'DENY') {
+          switchTab('investigations');
+          selectCase(msg.transaction_id);
+        } else {
+          logConsole('TIMELINE', `Fast-approved alert details: ${JSON.stringify(msg)}`);
+        }
+      };
+
+      // Cap timeline length
+      while (parent.children.length > 50) {
+        parent.removeChild(parent.lastChild);
+      }
+    }
+
+    // ==================== PROCESS AI DETECTIVE & LANGGRAPH TELEMETRY ====================
+    function processInvestigationComplete(msg) {
+      const caseId = msg.transaction_id;
+      if (!appState.investigations[caseId]) return;
+
+      const caseState = appState.investigations[caseId];
+      caseState.forensic = msg;
+
+      // Safely extract a forensic summary string
+      const reportText = typeof msg.forensic_report === 'string'
+        ? msg.forensic_report
+        : (msg.forensic_report?.narrative || msg.forensic_report?.recommendation || JSON.stringify(msg.forensic_report));
+
+      // Append trace logs
+      caseState.logs.push(
+        { t: new Date().toLocaleTimeString(), node: 'retrieve_graph', msg: 'Graph structure loaded. Querying mule community rings...' },
+        { t: new Date().toLocaleTimeString(), node: 'validate_ip', msg: `IP Address checks. VPN/Proxy detected: ${msg.ip_vpn ? 'YES (CRITICAL Risk)' : 'NO'}` },
+        { t: new Date().toLocaleTimeString(), node: 'evaluate_device', msg: `Fingerprint scanner outcome: ${msg.device_risk || 'UNKNOWN'} risk` },
+        { t: new Date().toLocaleTimeString(), node: 'compile_narrative', msg: `LangGraph forensic analysis: ${(reportText || '').substring(0, 80)}...` },
+        { t: new Date().toLocaleTimeString(), node: 'complete', msg: `Investigation process finalized in ${(msg.investigation_duration_ms || 0).toFixed(0)}ms.` }
+      );
+
+      // If this case is currently opened in Investigations workspace, refresh UI
+      if (appState.selectedCaseId === caseId) {
+        displayActiveCaseWorkspace();
+      }
+
+      // Update case item visual badge in the list
+      const borderGlow = document.getElementById(`case-glow-${caseId}`);
+      if (borderGlow) {
+        borderGlow.classList.remove('bg-textMuted');
+        borderGlow.classList.add('bg-purpleAccent', 'animate-pulse');
+      }
+
+      // Stop polling if running for this case and both forensic and explanation are complete
+      if (caseState.forensic && caseState.explanation) {
+        if (appState._pollTimers && appState._pollTimers[caseId]) {
+          clearInterval(appState._pollTimers[caseId]);
+          delete appState._pollTimers[caseId];
+        }
+      }
+
+      logConsole('CELERY_WORKER', `Case ${caseId} LangGraph trace generation complete.`);
+    }
+
+    // ==================== EXPLANATION COMPLETE HANDLER ====================
+    function processExplanationComplete(msg) {
+      const caseId = msg.transaction_id;
+      if (!appState.investigations[caseId]) return;
+
+      const caseState = appState.investigations[caseId];
+      caseState.explanation = msg.explanation;
+
+      // Append trace log for explanation
+      caseState.logs.push(
+        { t: new Date().toLocaleTimeString(), node: 'ai_explanation', msg: `AI analyst narrative generated: ${(msg.explanation?.analyst_summary || '').substring(0, 60)}...` }
+      );
+
+      // Update workspace if active
+      if (appState.selectedCaseId === caseId) {
+        displayActiveCaseWorkspace();
+      }
+
+      // Stop polling if running for this case and both forensic and explanation are complete
+      if (caseState.forensic && caseState.explanation) {
+        if (appState._pollTimers && appState._pollTimers[caseId]) {
+          clearInterval(appState._pollTimers[caseId]);
+          delete appState._pollTimers[caseId];
+        }
+      }
+    }
+
+    // ==================== INVESTIGATION VIEWS CONTROLLER ====================
+    function renderCaseCardInList(caseId) {
+      const list = document.getElementById('inv-list');
+      const empty = document.getElementById('inv-empty-state');
+      if (empty) empty.remove();
+
+      const caseData = appState.investigations[caseId];
+      const alert = caseData.alert;
+
+      const card = document.createElement('div');
+      card.id = `case-card-${caseId}`;
+      card.className = 'glass-panel hover:bg-surface2 border border-border p-3.5 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all duration-200';
+      
+      const inrVal = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(alert.amount);
+
+      card.innerHTML = `
+        <div class="space-y-1 text-xs overflow-hidden flex-1">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-textMuted" id="case-glow-${caseId}"></span>
+            <span class="font-bold text-textMain font-mono truncate">${alert.account_id}</span>
+          </div>
+          <div class="text-[10px] text-textMuted">${inrVal} · ${(alert.risk_score*100).toFixed(0)}% risk</div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-textMuted"></i>
+      `;
+
+      card.onclick = () => selectCase(caseId);
+      list.prepend(card);
+      lucide.createIcons({ parent: card });
+    }
+
+    // Polling timers storage
+    if (!appState._pollTimers) appState._pollTimers = {};
+
+    function selectCase(caseId) {
+      appState.selectedCaseId = caseId;
+
+      // Reset card selection highlights
+      document.querySelectorAll('[id^="case-card-"]').forEach(c => {
+        c.classList.remove('border-blueAccent', 'bg-surface2');
+      });
+
+      const activeCard = document.getElementById(`case-card-${caseId}`);
+      if (activeCard) {
+        activeCard.classList.add('border-blueAccent', 'bg-surface2');
+      }
+
+      // Hide workspace placeholder, show actual workspace
+      document.getElementById('inv-no-selection-state').classList.add('hidden');
+      document.getElementById('inv-workspace').classList.remove('hidden');
+
+      // Refresh sub tabs
+      switchInvSubTab('report');
+
+      // Populate workspaces details
+      displayActiveCaseWorkspace();
+
+      // Start REST polling fallback if investigation is still pending
+      const caseData = appState.investigations[caseId];
+      if (caseData && !caseData.forensic && !caseData.explanation) {
+        startPollingInvestigation(caseId);
+      }
+    }
+
+    function startPollingInvestigation(caseId) {
+      // Clear any existing timer for this case
+      if (appState._pollTimers[caseId]) {
+        clearInterval(appState._pollTimers[caseId]);
+      }
+
+      let attempts = 0;
+      const maxAttempts = 20; // Poll for up to 60 seconds (20 * 3s)
+
+      appState._pollTimers[caseId] = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(appState._pollTimers[caseId]);
+          delete appState._pollTimers[caseId];
+          logConsole('POLLER', `Stopped polling for case ${caseId.substring(0,8)} after ${maxAttempts} attempts.`);
+          return;
+        }
+
+        // Don't poll if we already have the data
+        const cd = appState.investigations[caseId];
+        if (!cd || (cd.forensic && cd.explanation)) {
+          clearInterval(appState._pollTimers[caseId]);
+          delete appState._pollTimers[caseId];
+          return;
+        }
+
+        try {
+          const resp = await fetch(`${appState.apiBaseUrl}/api/v1/investigations/${caseId}`);
+          if (!resp.ok) return;
+          const data = await resp.json();
+
+          if (!data.found) return;
+
+          // Process investigation data if available and not already received
+          if (data.investigation && !cd.forensic) {
+            const inv = data.investigation;
+            processInvestigationComplete({
+              transaction_id: caseId,
+              forensic_report: inv.recommendation || inv.narrative || JSON.stringify(inv),
+              final_confidence: inv.final_score >= 0.75 ? 'HIGH' : (inv.final_score >= 0.50 ? 'MEDIUM' : 'LOW'),
+              graph_risk: inv.graph_risk >= 0.5 ? 'CRITICAL' : (inv.graph_risk >= 0.3 ? 'HIGH' : 'LOW'),
+              device_risk: 'SCANNED',
+              ip_vpn: false,
+              investigation_duration_ms: inv.investigation_latency_ms || 0,
+              shap_features: inv.shap_features || [],
+            });
+            logConsole('POLLER', `Investigation data recovered from Redis for ${caseId.substring(0,8)}`);
+          }
+
+          // Process explanation data if available and not already received
+          if (data.explanation && !cd.explanation) {
+            processExplanationComplete({
+              transaction_id: caseId,
+              explanation: data.explanation,
+            });
+            logConsole('POLLER', `Explanation data recovered from Redis for ${caseId.substring(0,8)}`);
+          }
+
+          // Process forensic report if available
+          if (data.forensic && !cd.forensic) {
+            const fr = data.forensic;
+            processInvestigationComplete({
+              transaction_id: caseId,
+              forensic_report: fr.narrative || fr.recommendation || JSON.stringify(fr),
+              final_confidence: fr.confidence || 'MEDIUM',
+              graph_risk: fr.graph_analysis?.graph_risk > 0.3 ? 'HIGH' : 'LOW',
+              device_risk: fr.device_analysis?.risk_score > 0.3 ? 'HIGH' : 'LOW',
+              ip_vpn: fr.ip_analysis?.is_vpn || false,
+              investigation_duration_ms: fr.investigation_latency_ms || 0,
+            });
+            logConsole('POLLER', `Forensic report recovered from Redis for ${caseId.substring(0,8)}`);
+          }
+
+        } catch (e) {
+          // Silently continue polling
+        }
+      }, 3000);
+
+      logConsole('POLLER', `Started polling for investigation results: ${caseId.substring(0,8)}`);
+    }
+
+    function displayActiveCaseWorkspace() {
+      const caseId = appState.selectedCaseId;
+      const caseData = appState.investigations[caseId];
+      if (!caseData) return;
+
+      const alert = caseData.alert;
+      const forensic = caseData.forensic;
+      const explanation = caseData.explanation;
+
+      // Workspace Header
+      document.getElementById('inv-tx-id').innerText = caseId;
+      document.getElementById('inv-acc-id').innerText = alert.account_id;
+      document.getElementById('inv-amount').innerText = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(alert.amount);
+      document.getElementById('inv-score').innerText = `${(alert.risk_score * 100).toFixed(1)}%`;
+      
+      const vBadge = document.getElementById('inv-verdict-badge');
+      vBadge.innerText = alert.verdict;
+      if (alert.verdict === 'DENY') {
+        vBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase font-mono border bg-denyDim border-deny/30 text-deny';
+      } else {
+        vBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase font-mono border bg-holdDim border-hold/30 text-hold';
+      }
+
+      // Populate Forensic Tab details
+      if (forensic) {
+        document.getElementById('rep-graph-risk').innerText = forensic.graph_risk || 'SCANNED';
+        document.getElementById('rep-device-risk').innerText = forensic.device_risk || 'SCANNED';
+        document.getElementById('rep-vpn').innerText = forensic.ip_vpn ? 'VPN DETECTED' : 'NORMAL';
+        const durationMs = forensic.investigation_duration_ms || 0;
+        document.getElementById('rep-duration').innerText = `${typeof durationMs === 'number' ? durationMs.toFixed(0) : durationMs}ms scan`;
+        // Handle forensic_report as string or object
+        const reportText = typeof forensic.forensic_report === 'string'
+          ? forensic.forensic_report
+          : (forensic.forensic_report?.narrative || forensic.forensic_report?.recommendation || JSON.stringify(forensic.forensic_report, null, 2));
+        document.getElementById('rep-narrative').innerText = reportText || 'Forensic analysis complete.';
+      } else if (explanation) {
+        // We have explanation but no forensic investigation yet
+        document.getElementById('rep-graph-risk').innerText = 'PENDING';
+        document.getElementById('rep-device-risk').innerText = 'PENDING';
+        document.getElementById('rep-vpn').innerText = 'PENDING';
+        document.getElementById('rep-duration').innerText = 'graph scan pending...';
+        document.getElementById('rep-narrative').innerText = explanation.analyst_summary || 'AI explanation received. Deep graph scan still in progress...';
+      } else {
+        document.getElementById('rep-graph-risk').innerText = 'SCANNING...';
+        document.getElementById('rep-device-risk').innerText = 'SCANNING...';
+        document.getElementById('rep-vpn').innerText = 'SCANNING...';
+        document.getElementById('rep-duration').innerText = 'analysis in progress...';
+        document.getElementById('rep-narrative').innerText = 'AI investigation pipeline is running. The LangGraph detective agent is analyzing IP, device, and graph signals. Results will appear automatically when complete...';
+      }
+
+      // Factors bulleted triggers list
+      const factList = document.getElementById('rep-factors-list');
+      factList.innerHTML = '';
+      if (explanation && explanation.reasons && explanation.reasons.length > 0) {
+        explanation.reasons.forEach(r => {
+          const li = document.createElement('li');
+          li.innerText = r;
+          factList.appendChild(li);
+        });
+      } else if (forensic && forensic.shap_features && forensic.shap_features.length > 0) {
+        forensic.shap_features.forEach(f => {
+          const li = document.createElement('li');
+          const name = (f.feature || '').replace(/_/g, ' ');
+          const impact = f.impact ? ` (impact: ${f.impact > 0 ? '+' : ''}${f.impact.toFixed(3)})` : '';
+          li.innerText = `${name}${impact}`;
+          factList.appendChild(li);
+        });
+      } else if (alert.shap_features && alert.shap_features.length > 0) {
+        alert.shap_features.forEach(f => {
+          const li = document.createElement('li');
+          const name = (f.feature || '').replace(/_/g, ' ');
+          const impact = f.impact ? ` (impact: ${f.impact > 0 ? '+' : ''}${f.impact.toFixed(3)})` : '';
+          li.innerText = `${name}${impact}`;
+          factList.appendChild(li);
+        });
+      }
+
+      // Populate Trace terminal tab logs
+      const termLogs = document.getElementById('trace-terminal-logs');
+      termLogs.innerHTML = '';
+      caseData.logs.forEach(log => {
+        const item = document.createElement('div');
+        item.innerHTML = `<span class="text-textMuted font-bold">[${log.t}]</span> <span class="text-blueAccent font-semibold">${log.node}:</span> <span class="text-textMain">${log.msg}</span>`;
+        termLogs.appendChild(item);
+      });
+      termLogs.scrollTop = termLogs.scrollHeight;
+    }
+
+    function switchInvSubTab(subTab) {
+      document.querySelectorAll('.inv-sub-tab').forEach(b => {
+        b.classList.remove('border-blueAccent', 'text-textMain');
+        b.classList.add('border-transparent', 'text-textMuted');
+      });
+      document.getElementById(`inv-sub-tab-${subTab}`).classList.add('border-blueAccent', 'text-textMain');
+
+      document.querySelectorAll('.inv-workspace-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`inv-workspace-${subTab}`).classList.remove('hidden');
+    }
+
+    function resolveCase(action) {
+      const caseId = appState.selectedCaseId;
+      if (!caseId) return;
+
+      logConsole('INVESTIGATION_DECISION', `Analyst resolved Case: ${caseId} with decision: ${action}`);
+      showToast(action, appState.investigations[caseId].alert.amount, 0, `Analyst overrides verdict for case ${caseId.substring(0, 8)}`);
+
+      // Remove from investigations view list
+      const card = document.getElementById(`case-card-${caseId}`);
+      if (card) card.remove();
+      
+      delete appState.investigations[caseId];
+      appState.selectedCaseId = null;
+
+      // Hide workspace, show placeholder
+      document.getElementById('inv-no-selection-state').classList.remove('hidden');
+      document.getElementById('inv-workspace').classList.add('hidden');
+
+      // If list is empty, show empty notice
+      const list = document.getElementById('inv-list');
+      if (list.children.length <= 1) { // 1 element is header
+        const empty = document.createElement('div');
+        empty.id = 'inv-empty-state';
+        empty.className = 'text-xs text-textMuted px-2 py-8 text-center';
+        empty.innerText = 'No active threat cases flagged for investigation yet.';
+        list.appendChild(empty);
+      }
+    }
+
+    // ==================== VIS.JS GRAPH EXPLORER ====================
+    function initVisGraph() {
+      const container = document.getElementById('network-graph-canvas');
+      
+      appState.nodes = new vis.DataSet([]);
+      appState.edges = new vis.DataSet([]);
+
+      const data = {
+        nodes: appState.nodes,
+        edges: appState.edges
+      };
+
+      const options = {
+        nodes: {
+          shape: 'dot',
+          size: 14,
+          font: { size: 11, color: '#E8F1FC', face: 'Outfit' },
+          borderWidth: 2,
+          shadow: true
+        },
+        edges: {
+          width: 1.5,
+          color: { color: '#1F2A3F', highlight: '#38BDF8', hover: '#38BDF8' },
+          smooth: { type: 'continuous' }
+        },
+        physics: {
+          stabilization: false,
+          barnesHut: {
+            gravitationalConstant: -1800,
+            centralGravity: 0.35,
+            springLength: 90,
+            springConstant: 0.05
+          }
+        },
+        interaction: { hover: true }
+      };
+
+      appState.network = new vis.Network(container, data, options);
+
+      // Node double-click action (redirect to investigation if held)
+      appState.network.on("doubleClick", function (params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          logConsole('GRAPH', `Node double-clicked: ${nodeId}`);
+        }
+      });
+    }
+
+    function addTransactionNode(tx) {
+      if (!appState.nodes) return;
+
+      const senderId = tx.account_id;
+      const recipientId = tx.recipient_id;
+
+      // Add sender node
+      if (!appState.nodes.get(senderId)) {
+        appState.nodes.add({
+          id: senderId,
+          label: senderId.substring(0, 10),
+          color: { background: '#050811', border: '#38BDF8' },
+          title: `Sender account ID: ${senderId}`
+        });
+      }
+
+      // Add recipient node (suspicious if verdict is DENY or ID has suspicious labels)
+      if (!appState.nodes.get(recipientId)) {
+        const suspect = tx.verdict === 'DENY' || recipientId.includes('SUSPECT') || recipientId.includes('UNKNOWN');
+        appState.nodes.add({
+          id: recipientId,
+          label: recipientId.substring(0, 10),
+          color: { 
+            background: '#050811', 
+            border: suspect ? '#FF3D5A' : '#34D399' 
+          },
+          title: `Recipient account ID: ${recipientId}`
+        });
+      }
+
+      // Add link Edge representing transaction operation
+      const edgeId = tx.transaction_id || Math.random().toString();
+      let edgeColor = '#34D399';
+      if (tx.verdict === 'HOLD') edgeColor = '#FFAB2E';
+      else if (tx.verdict === 'DENY') edgeColor = '#FF3D5A';
+
+      appState.edges.add({
+        id: edgeId,
+        from: senderId,
+        to: recipientId,
+        label: `₹${Math.round(tx.amount)}`,
+        font: { size: 9, color: '#7D8C9F', face: 'Outfit', align: 'horizontal' },
+        color: { color: edgeColor }
+      });
+    }
+
+    function fitGraphView() {
+      if (appState.network) {
+        appState.network.fit();
+      }
+    }
+
+    function clearGraphData() {
+      if (appState.nodes && appState.edges) {
+        appState.nodes.clear();
+        appState.edges.clear();
+        logConsole('GRAPH', 'Graph Canvas nodes and edges purged successfully.');
+      }
+    }
+
+    // ==================== MANUAL SANDBOX FORM HANDLER ====================
+    function toggleSbField(fieldId, fieldId2 = null) {
+      const input = document.getElementById(fieldId);
+      input.disabled = !input.disabled;
+      if (input.disabled) {
+        input.classList.add('opacity-40');
+      } else {
+        input.classList.remove('opacity-40');
+      }
+
+      if (fieldId2) {
+        const input2 = document.getElementById(fieldId2);
+        input2.disabled = !input2.disabled;
+        if (input2.disabled) {
+          input2.classList.add('opacity-40');
+        } else {
+          input2.classList.remove('opacity-40');
+        }
+      }
+    }
+
+    function loadPreset(presetType) {
+      if (presetType === 'legitimate') {
+        setSandboxFields('C_SENDER_MOHAN_98', 'C_MERCHANT_AMAZON', 345.50, 'PAYMENT', 15000.0, 420, 110, 'dev_bgl_laptop_902', 12.9716, 77.5946, false, false, false);
+      } else if (presetType === 'midnight') {
+        setSandboxFields('C_PRIYA_STUDENT_001', 'C_UNKNOWN_RECIPIENT_999', 83148.00, 'TRANSFER', 83148.00, 180, 2, 'dev_macbook_unk', 12.97, 77.59, true, true, true);
+      } else if (presetType === 'mule') {
+        setSandboxFields('C_SENDER_BOB_44', 'C_SUSPECT_MULE_009', 245382.50, 'TRANSFER', 245382.50, 15, 0, 'dev_bgl_laptop_902', 28.6139, 77.2090, true, false, false);
+      }
+      logConsole('SANDBOX', `Preset '${presetType}' parameters applied.`);
+    }
+
+    function setSandboxFields(acc, rec, amt, type, bal, age, txCount, dev, lat, lon, isNew, omitDev, omitGPS) {
+      document.getElementById('sb-account-id').value = acc;
+      document.getElementById('sb-recipient-id').value = rec;
+      document.getElementById('sb-amount').value = amt;
+      document.getElementById('sb-type').value = type;
+      document.getElementById('sb-balance').value = bal;
+      document.getElementById('sb-age').value = age;
+      document.getElementById('sb-tx-count').value = txCount;
+      
+      const devIn = document.getElementById('sb-device-id');
+      devIn.value = dev;
+      devIn.disabled = omitDev;
+      document.getElementById('sb-omit-device').checked = omitDev;
+      if (omitDev) devIn.classList.add('opacity-40'); else devIn.classList.remove('opacity-40');
+      
+      const latIn = document.getElementById('sb-lat');
+      const lonIn = document.getElementById('sb-lon');
+      latIn.value = lat;
+      lonIn.value = lon;
+      latIn.disabled = omitGPS;
+      lonIn.disabled = omitGPS;
+      document.getElementById('sb-omit-location').checked = omitGPS;
+      if (omitGPS) {
+        latIn.classList.add('opacity-40');
+        lonIn.classList.add('opacity-40');
+      } else {
+        latIn.classList.remove('opacity-40');
+        lonIn.classList.remove('opacity-40');
+      }
+
+      document.getElementById('sb-new-recipient').checked = isNew;
+    }
+
+    async function submitManualTransaction(event) {
+      if (event) event.preventDefault();
+
+      const txPayload = {
+        transaction_id: generateUUID(),
+        account_id: document.getElementById('sb-account-id').value.trim(),
+        recipient_id: document.getElementById('sb-recipient-id').value.trim(),
+        amount: parseFloat(document.getElementById('sb-amount').value),
+        transaction_type: document.getElementById('sb-type').value,
+        timestamp: new Date().toISOString(),
+        account_age_days: parseInt(document.getElementById('sb-age').value),
+        account_balance_before: parseFloat(document.getElementById('sb-balance').value),
+        is_new_recipient: document.getElementById('sb-new-recipient').checked,
+        sender_tx_count: parseInt(document.getElementById('sb-tx-count').value),
+        device_id: document.getElementById('sb-omit-device').checked ? null : document.getElementById('sb-device-id').value.trim(),
+        ip_address: "127.0.0.1",
+        latitude: document.getElementById('sb-omit-location').checked ? null : parseFloat(document.getElementById('sb-lat').value),
+        longitude: document.getElementById('sb-omit-location').checked ? null : parseFloat(document.getElementById('sb-lon').value)
+      };
+
+      logConsole('SANDBOX', `Posting transaction payload: ${txPayload.transaction_id}`);
+      
+      try {
+        const response = await fetch(`${appState.apiBaseUrl}/api/v1/transactions/evaluate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'dev-key-local-only'
+          },
+          body: JSON.stringify(txPayload)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          logConsole('API_RESPONSE', `Evaluation verdict: ${result.verdict} (${result.inference_latency_ms}ms)`);
+          
+          // Re-inject locally if websocket was not ready (fallback logic)
+          if (!appState.ws || appState.ws.readyState !== WebSocket.OPEN) {
+            logConsole('SYSTEM', 'WebSocket disconnected; executing local UI state injection.');
+            processIncomingAlert({
+              type: 'FRAUD_ALERT',
+              timestamp: new Date().toISOString(),
+              verdict: result.verdict,
+              transaction_id: txPayload.transaction_id,
+              amount: txPayload.amount,
+              account_id: txPayload.account_id,
+              recipient_id: txPayload.recipient_id,
+              risk_score: result.combined_risk_score,
+              shap_features: result.shap_top_features,
+              latency_ms: result.inference_latency_ms,
+              challenge_type: result.challenge_type
+            });
+          }
+        } else {
+          const err = await response.text();
+          logConsole('API_ERROR', `Failed evaluation POST: ${err}`);
+          triggerMockFallbackAlert(txPayload);
+        }
+      } catch (e) {
+        logConsole('API_ERROR', `Connection refused to gateway. ${e.message}`);
+        triggerMockFallbackAlert(txPayload);
+      }
+    }
+
+    // ==================== MOCK FALLBACK INJECTION (WHEN BACKEND OFFLINE) ====================
+    function triggerMockFallbackAlert(tx) {
+      logConsole('MOCK_ENGINE', 'Triggering mock evaluation response fallback.');
+      
+      // Determine dummy verdict
+      let verdict = 'APPROVE';
+      let riskScore = 0.05 + (tx.amount > 50000 ? 0.35 : 0) + (tx.is_new_recipient ? 0.2 : 0) + (tx.device_id === null ? 0.25 : 0);
+      riskScore = Math.min(1.0, riskScore);
+
+      if (riskScore >= 0.63) {
+        verdict = 'DENY';
+      } else if (riskScore >= 0.446) {
+        verdict = 'HOLD';
+      }
+
+      const shapList = [];
+      if (tx.is_new_recipient) shapList.push({ feature: 'is_new_recipient', value: 1, impact: 0.22 });
+      if (tx.amount > 50000) shapList.push({ feature: 'amount_log', value: Math.log1p(tx.amount), impact: 0.38 });
+      if (tx.device_id === null) shapList.push({ feature: 'has_device_id', value: 0, impact: 0.29 });
+      
+      const mockAlert = {
+        type: 'FRAUD_ALERT',
+        timestamp: new Date().toISOString(),
+        verdict: verdict,
+        transaction_id: tx.transaction_id,
+        amount: tx.amount,
+        account_id: tx.account_id,
+        recipient_id: tx.recipient_id,
+        risk_score: riskScore,
+        shap_features: shapList,
+        latency_ms: 3.25,
+        challenge_type: verdict === 'HOLD' ? 'BIOMETRIC' : 'NONE'
+      };
+
+      setTimeout(() => {
+        processIncomingAlert(mockAlert);
+        
+        // Mock async worker results if held
+        if (verdict === 'HOLD') {
+          setTimeout(() => {
+            processExplanationComplete({
+              transaction_id: tx.transaction_id,
+              explanation: {
+                analyst_summary: `The transaction for INR ${tx.amount.toLocaleString()} was held as it drained account balances, used unrecognized devices, and matches typical mule community transfer channels. Immediate step-up multi-factor biometric check issued.`,
+                reasons: ['First time recipient route used.', 'Complete account balance drain expected.']
+              }
+            });
+            
+            processInvestigationComplete({
+              transaction_id: tx.transaction_id,
+              forensic_report: `ANALYST AUDIT LOG:\n- Recipient matches community pattern profile.\n- Transaction late night time encoding.\n- Device fingerprint validation missed.\n- Geolocation anomaly: Far away node detected.`,
+              final_confidence: 'HIGH',
+              graph_risk: 'CRITICAL',
+              device_risk: 'MEDIUM',
+              ip_vpn: true,
+              investigation_duration_ms: 120
+            });
+          }, 1200);
+        }
+      }, 300);
+    }
+
+    // ==================== DYNAMIC AUTOMATION STREAM SIMULATOR ====================
+    function toggleSimulation() {
+      const btn = document.getElementById('sim-toggle-btn');
+      
+      if (appState.simActive) {
+        appState.simActive = false;
+        clearInterval(appState.simTimer);
+        appState.simTimer = null;
+        
+        btn.innerHTML = `<i data-lucide="play-circle" class="w-4 h-4 text-darkbg"></i> Start Simulator`;
+        btn.className = "flex-1 bg-blueAccent hover:bg-blueAccent/90 text-darkbg rounded-lg py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all";
+        logConsole('SIMULATOR', 'Automated transaction simulator stopped.');
+      } else {
+        appState.simActive = true;
+        
+        const delayVal = parseInt(document.getElementById('sim-delay').value) * 1000;
+        appState.simTimer = setInterval(generateRandomSandboxTx, delayVal);
+        
+        btn.innerHTML = `<i data-lucide="pause-circle" class="w-4 h-4 text-darkbg"></i> Stop Simulator`;
+        btn.className = "flex-1 bg-deny hover:bg-deny/90 text-darkbg rounded-lg py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all";
+        logConsole('SIMULATOR', 'Automated transaction simulator stream started.');
+        
+        // Fire first transaction immediately
+        generateRandomSandboxTx();
+      }
+      lucide.createIcons({ parent: btn });
+    }
+
+    function generateRandomSandboxTx() {
+      const ratio = parseInt(document.getElementById('sim-ratio').value);
+      const isChaos = document.getElementById('sim-chaos').value === 'true';
+      
+      // Determine if this random entry is legitimate vs fraudulent based on slider ratio
+      const roll = Math.floor(Math.random() * 100);
+      const makeFraud = roll >= ratio;
+
+      // Realistic Indian account names and merchant IDs
+      const randomSenders = [
+        'C_ACCT_MOHAN_4829', 'C_ACCT_ANITA_7361', 'C_ACCT_RAJESH_1054',
+        'C_ACCT_KAVITHA_8892', 'C_ACCT_DEEPAK_2137', 'C_ACCT_PREET_6504',
+        'C_ACCT_NEHA_3291', 'C_ACCT_VIKRAM_9076'
+      ];
+      const randomMerchants = [
+        'C_MERCH_AMAZON_IN', 'C_MERCH_FLIPKART', 'C_MERCH_BIGBASKET',
+        'C_MERCH_SWIGGY', 'C_MERCH_ZOMATO', 'C_MERCH_MYNTRA',
+        'C_MERCH_PHONEPE_BILL', 'C_MERCH_IRCTC'
+      ];
+      const randomMules = [
+        'C_UNKNOWN_REC_4419', 'C_SUSPECT_ACCT_7783', 'C_UNKNOWN_REC_2106',
+        'C_SUSPECT_ACCT_9051', 'C_UNKNOWN_RECIPIENT_999'
+      ];
+      const fraudSenders = [
+        'C_ACCT_PRIYA_1847', 'C_ACCT_SANJAY_5503', 'C_ACCT_MEERA_0294',
+        'C_ACCT_ARJUN_8871', 'C_ACCT_DIVYA_3320'
+      ];
+      const deviceIds = [
+        'dev_pixel7_bgl_482', 'dev_iphone14_mum_891', 'dev_samsung_del_037',
+        'dev_oneplus_hyd_615', 'dev_macbook_chn_203', 'dev_realme_kol_774'
+      ];
+
+      let acc, rec, amt, type, bal, age, txCount, dev, lat, lon, isNew, omitDev, omitGPS;
+
+      // Generate realistic non-round amounts
+      function realisticAmount(min, max) {
+        return parseFloat((Math.random() * (max - min) + min).toFixed(2));
+      }
+
+      if (!makeFraud) {
+        // Legitimate profile with realistic amounts
+        acc = randomSenders[Math.floor(Math.random() * randomSenders.length)];
+        rec = randomMerchants[Math.floor(Math.random() * randomMerchants.length)];
+        amt = realisticAmount(89, 4750);
+        type = Math.random() > 0.4 ? 'PAYMENT' : 'TRANSFER';
+        bal = realisticAmount(amt + 1200, amt + 45000);
+        age = Math.floor(Math.random() * 800) + 100;
+        txCount = Math.floor(Math.random() * 200) + 15;
+        dev = deviceIds[Math.floor(Math.random() * deviceIds.length)];
+        lat = 12.9716 + (Math.random() - 0.5) * 0.05;
+        lon = 77.5946 + (Math.random() - 0.5) * 0.05;
+        isNew = false;
+        omitDev = false;
+        omitGPS = false;
+      } else {
+        // Fraud / Suspicious profile
+        if (Math.random() > 0.5) {
+          // Midnight Ghost style — account drain with no device/GPS
+          acc = fraudSenders[Math.floor(Math.random() * fraudSenders.length)];
+          rec = randomMules[Math.floor(Math.random() * randomMules.length)];
+          amt = realisticAmount(67200, 97500);
+          type = 'TRANSFER';
+          bal = parseFloat((amt + Math.random() * 85).toFixed(2)); // Near-drain
+          age = Math.floor(Math.random() * 100) + 30;
+          txCount = Math.floor(Math.random() * 3);
+          dev = null;
+          lat = null;
+          lon = null;
+          isNew = true;
+          omitDev = true;
+          omitGPS = true;
+        } else {
+          // Mule Ring style — high value with device but suspicious recipient
+          acc = randomSenders[Math.floor(Math.random() * randomSenders.length)];
+          rec = randomMules[Math.floor(Math.random() * randomMules.length)];
+          amt = realisticAmount(82400, 248000);
+          type = 'TRANSFER';
+          bal = parseFloat((amt + Math.random() * 5200).toFixed(2));
+          age = Math.floor(Math.random() * 300) + 10;
+          txCount = Math.floor(Math.random() * 15);
+          dev = 'dev_emulator_x86_001';
+          lat = 28.6139 + (Math.random() - 0.5) * 0.1;
+          lon = 77.2090 + (Math.random() - 0.5) * 0.1;
+          isNew = true;
+          omitDev = false;
+          omitGPS = false;
+        }
+      }
+
+      setSandboxFields(acc, rec, amt, type, bal, age, txCount, dev, lat, lon, isNew, omitDev, omitGPS);
+      
+      // Auto-submit form parameters
+      submitManualTransaction();
+
+      // If chaos mode activated, blast an extra transaction
+      if (isChaos) {
+        setTimeout(generateRandomSandboxTx, 200);
+      }
+    }
+
+    // ==================== NOTIFICATION TOAST WRAPPER ====================
+    function showToast(verdict, amount, risk, accId) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let badgeClass = 'border-approve text-approve';
+      let icon = 'check-circle2';
+      let title = 'Transaction Approved';
+      if (verdict === 'HOLD') {
+        badgeClass = 'border-hold text-hold';
+        icon = 'shield-alert';
+        title = 'Investigation Triggered';
+      } else if (verdict === 'DENY') {
+        badgeClass = 'border-deny text-deny';
+        icon = 'alert-triangle';
+        title = 'Fraud Attempt Blocked';
+      } else if (verdict === 'APPROVE' && risk === 0) {
+        // overridden
+        badgeClass = 'border-approve text-approve';
+        icon = 'unlock';
+        title = 'Override Release';
+      }
+
+      const inrFmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+
+      toast.className = `glass-panel pointer-events-auto border border-l-4 rounded-xl p-4 flex items-start gap-3 w-80 shadow-2xl transition-all duration-300 transform translate-x-10 opacity-0 ${badgeClass}`;
+      toast.style.borderLeftWidth = '4px';
+
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+        <div class="flex-1 space-y-0.5">
+          <div class="text-xs font-extrabold text-textMain">${title}</div>
+          <div class="text-[11px] text-textMuted">${accId} : ${inrFmt}</div>
+        </div>
+      `;
+
+      container.prepend(toast);
+      lucide.createIcons({ parent: toast });
+
+      // Animate entry
+      setTimeout(() => {
+        toast.classList.remove('translate-x-10', 'opacity-0');
+      }, 50);
+
+      // Auto dismiss
+      setTimeout(() => {
+        toast.classList.add('translate-x-10', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4500);
+    }
+
+    // ==================== MONOSPACE TERMINAL LOGGER ====================
+    function logConsole(service, message) {
+      const term = document.getElementById('obs-console-logs');
+      if (!term) return;
+
+      const dateStr = new Date().toISOString();
+      const entry = document.createElement('div');
+      entry.className = 'font-mono text-[10px] leading-relaxed';
+      
+      let serviceColor = 'text-textMuted';
+      if (service === 'WS_INBOUND') serviceColor = 'text-purpleAccent';
+      else if (service === 'API_RESPONSE') serviceColor = 'text-greenAccent';
+      else if (service === 'API_ERROR' || service === 'WS_CLIENT_ERR') serviceColor = 'text-deny';
+      else if (service === 'WS_CLIENT') serviceColor = 'text-blueAccent';
+      else if (service === 'CELERY_WORKER') serviceColor = 'text-pink-400';
+      else if (service === 'INVESTIGATION_DECISION') serviceColor = 'text-greenAccent font-bold';
+
+      entry.innerHTML = `
+        <span class="text-textMuted/40">[${dateStr}]</span> 
+        <span class="${serviceColor} font-bold">${service}:</span> 
+        <span class="text-textMain">${escapeHTML(message)}</span>
+      `;
+
+      term.appendChild(entry);
+      term.scrollTop = term.scrollHeight;
+
+      // Cap logs
+      while (term.children.length > 200) {
+        term.removeChild(term.firstChild);
+      }
+    }
+
+    // ==================== TIMELINE CLEANER ====================
+    function clearDashboardFeed() {
+      const container = document.getElementById('timeline-container');
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-24 text-center text-textMuted space-y-3" id="timeline-empty-state">
+          <div class="w-12 h-12 rounded-full border border-border flex items-center justify-center">
+            <i data-lucide="inbox" class="w-6 h-6 text-textMuted/40"></i>
+          </div>
+          <div>
+            <p class="font-bold text-textMain text-sm">No transactions stream detected yet</p>
+            <p class="text-xs text-textMuted max-w-xs mt-1">
+              Send transactions to the endpoint or configure and start the live simulator in the Sandbox tab.
+            </p>
+          </div>
+        </div>
+      `;
+      lucide.createIcons({ parent: container });
+
+      // Reset statistics
+      Object.keys(appState.counts).forEach(k => appState.counts[k] = 0);
+      document.getElementById('m-total').innerText = '0';
+      document.getElementById('m-approved').innerText = '0';
+      document.getElementById('m-held').innerText = '0';
+      document.getElementById('m-blocked').innerText = '0';
+      document.getElementById('m-latency').innerText = '—';
+      appState.latencies.length = 0;
+      appState.transactions.length = 0;
+
+      updateGaugeScore(0, 'APPROVE');
+      logConsole('SYSTEM', 'Dashboard timeline feed and statistics reset.');
+    }
+
+    // ==================== UTILS AND UUID GENERATION ====================
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function escapeHTML(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>

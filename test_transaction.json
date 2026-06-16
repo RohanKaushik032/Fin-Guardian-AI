@@ -1,0 +1,15 @@
+{
+  "account_id": "C_PRIYA_STUDENT_001",
+  "recipient_id": "C_UNKNOWN_RECIPIENT_999",
+  "amount": 92000.0,
+  "transaction_type": "TRANSFER",
+  "timestamp": "2026-01-15T23:45:00Z",
+  "device_id": null,
+  "ip_address": null,
+  "latitude": null,
+  "longitude": null,
+  "account_age_days": 180,
+  "account_balance_before": 95000.0,
+  "is_new_recipient": true,
+  "sender_tx_count": 3
+}

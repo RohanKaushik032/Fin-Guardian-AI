@@ -1,0 +1,26 @@
+{
+  "n_features": 16,
+  "features": [
+    "hour_sin",
+    "hour_cos",
+    "day_sin",
+    "day_cos",
+    "amount_log",
+    "amount_to_balance_ratio",
+    "balance_error_orig_log",
+    "balance_error_dest_log",
+    "sender_zeroed",
+    "dest_was_empty",
+    "is_new_recipient",
+    "has_location",
+    "has_device_id",
+    "sender_tx_count",
+    "recipient_tx_count",
+    "type_encoded"
+  ],
+  "recon_threshold": 1.3025567531585693,
+  "best_val_loss": 0.9539078711801922,
+  "epochs_trained": 12,
+  "auc_pr": 0.045,
+  "auc_roc": 0.9714
+}
